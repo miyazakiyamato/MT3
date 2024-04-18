@@ -1,5 +1,5 @@
 #include <Novice.h>
-
+#include <math.h>
 const char kWindowTitle[] = "LD2B_07_ミヤザキ_ヤマト";
 
 struct Matrix4x4
@@ -105,7 +105,6 @@ void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label
 			Novice::ScreenPrintf(x + column * KColumnWidth, y + row * kRowHeight + kRowHeight, "%6.02f", matrix.m[row][column]);
 		}
 	}
-	
 }
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -114,9 +113,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Novice::Initialize(kWindowTitle, 1280, 720);
 
 	// キー入力結果を受け取る箱
-	char keys[256] = {0};
-	char preKeys[256] = {0};
-
+	char keys[256] = { 0 };
+	char preKeys[256] = { 0 };
+	//
 	Matrix4x4 m1 = {
 		3.2f,0.7f,9.6f,4.4f,
 		5.5f,1.3f,7.8f,2.1f,
