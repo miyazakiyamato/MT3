@@ -12,6 +12,7 @@ struct Matrix4x4
 {
 	float m[4][4];
 };
+
 Matrix4x4 MakeTranslateMatrix(const Vector3& translate) {
 	Matrix4x4 m;
 	m.m[0][0] = 1; m.m[0][1] = 0; m.m[0][2] = 0; m.m[0][3] = 0;
@@ -80,6 +81,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		2.0f,2.0f,1.0f,3.0f
 	};
 	Vector3 transformed = Transform(point, transformMatrix);
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
