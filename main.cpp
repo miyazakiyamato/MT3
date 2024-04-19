@@ -25,33 +25,27 @@ Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2) {
 
 Matrix4x4 MakeTranslateMatrix(const Vector3& translate) {
 	Matrix4x4 m;
-	m.m[0][0] = 1; m.m[0][1] = 0; m.m[0][2] = 0; m.m[0][3] = 0;
-	m.m[1][0] = 0; m.m[1][1] = 1; m.m[1][2] = 0; m.m[1][3] = 0;
-	m.m[2][0] = 0; m.m[2][1] = 0; m.m[2][2] = 1; m.m[2][3] = 0;
-	m.m[3][0] = translate.x; m.m[3][1] = translate.y; m.m[3][2] = translate.z; m.m[3][3] = 1;
-	return m;
-}
-Matrix4x4 MakeScaleMatrix(const Vector3& scale) {
-	Matrix4x4 m;
-	m.m[0][0] = scale.x; m.m[0][1] = 0; m.m[0][2] = 0; m.m[0][3] = 0;
-	m.m[1][0] = 0; m.m[1][1] = scale.y; m.m[1][2] = 0; m.m[1][3] = 0;
-	m.m[2][0] = 0; m.m[2][1] = 0; m.m[2][2] = scale.z; m.m[2][3] = 0;
+	m.m[0][0] = 1; m.m[0][1] = 0;m.m[0][2] = 0; m.m[0][3] = 0; 
+	m.m[1][0] = 0; m.m[1][1] = std::cosf(radius); m.m[1][2] = std::sinf(radius); m.m[1][3] = 0;
+	m.m[2][0] = 0; m.m[2][1] = -std::sinf(radius); m.m[2][2] = std::cosf(radius);  m.m[2][3] = 0;
 	m.m[3][0] = 0; m.m[3][1] = 0; m.m[3][2] = 0; m.m[3][3] = 1;
 	return m;
 }
-Vector3 Transform(const Vector3& Vector, const Matrix4x4& matrix) {
-	Vector3 v;
-	v.x = Vector.x * matrix.m[0][0] + Vector.y * matrix.m[1][0] + Vector.z * matrix.m[2][0] + matrix.m[3][0];
-	v.y = Vector.x * matrix.m[0][1] + Vector.y * matrix.m[1][1] + Vector.z * matrix.m[2][1] + matrix.m[3][1];
-	v.z = Vector.x * matrix.m[0][2] + Vector.y * matrix.m[1][2] + Vector.z * matrix.m[2][2] + matrix.m[3][2];
-	float w = Vector.x * matrix.m[0][3] + Vector.y * matrix.m[1][3] + Vector.z * matrix.m[2][3] + matrix.m[3][3];
-
-	assert(w != 0.0f);
-	v.x /= w;
-	v.y /= w;
-	v.z /= w;
-
-	return v;
+Matrix4x4 MakeRotateYMatrix(float radius) {
+	Matrix4x4 m;
+	m.m[0][0] = std::cosf(radius); m.m[0][1] = 0; m.m[0][2] = -std::sinf(radius); m.m[0][3] = 0;
+	m.m[1][0] = 0; m.m[1][1] = 1; m.m[1][2] = 0; m.m[1][3] = 0;
+	m.m[2][0] = std::sinf(radius); m.m[2][1] = 0; m.m[2][2] = std::cosf(radius); m.m[2][3] = 0;
+	m.m[3][0] = 0; m.m[3][1] = 0; m.m[3][2] = 0; m.m[3][3] = 1;
+	return m;
+}
+Matrix4x4 MakeRotateZMatrix(float radius) {
+	Matrix4x4 m;
+	m.m[0][0] = std::cosf(radius); m.m[0][1] = std::sinf(radius); m.m[0][2] = 0; m.m[0][3] = 0;
+	m.m[1][0] = -std::sinf(radius); m.m[1][1] = std::cosf(radius); m.m[1][2] = 0; m.m[1][3] = 0;
+	m.m[2][0] = 0; m.m[2][1] = 0; m.m[2][2] = 1; m.m[2][3] = 0;
+	m.m[3][0] = 0; m.m[3][1] = 0; m.m[3][2] = 0; m.m[3][3] = 1;
+	return m;
 }
 
 Matrix4x4 MakeRotateXMatrix(float radius) {
