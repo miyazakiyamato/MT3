@@ -131,7 +131,7 @@ Matrix4x4 Transpose(const Matrix4x4& m) {
 	m2.m[3][0] = m.m[0][3]; m2.m[3][1] = m.m[1][3]; m2.m[3][2] = m.m[2][3]; m2.m[3][3] = m.m[3][3];
 	return m2;
 };
-Matrix4x4 MakeIdentity4x4() {
+Matrix4x4 MakeTranslateMatrix(const Vector3 & translate) {
 	Matrix4x4 m;
 	m.m[0][0] = 1; m.m[0][1] = 0; m.m[0][2] = 0; m.m[0][3] = 0;
 	m.m[1][0] = 0; m.m[1][1] = 1; m.m[1][2] = 0; m.m[1][3] = 0;
