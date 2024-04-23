@@ -3,7 +3,6 @@
 #include "MyMtVector3.h"
 #include "MyMtMatrix.h"
 
-
 const char kWindowTitle[] = "LD2B_07_ミヤザキ_ヤマト";
 
 //クロス積
