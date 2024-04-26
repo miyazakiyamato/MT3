@@ -37,14 +37,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 
-	Vector3 v1{ 1.2f,-3.9f,2.5f };
-	Vector3 v2{ 2.8f,0.4f,-1.3f };
-	Vector3 cross = Cross(v1, v2);
+	Vector3 cross{};
 	//
 	Vector3 rotate{};
 	Vector3 translate{};
 	int kWindowWidth = 1280;
 	int kWindowHeight = 720;
+	Vector3 cameraRotate{};
 	Vector3 cameraPosition{ 0,0,-100 };
 	Matrix4x4 worldMatrix{};
 	Matrix4x4 cameraMatrix{};
@@ -52,7 +51,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 projectionMatrix{};
 	Matrix4x4 worldViewProjectionMatrix{};
 	Matrix4x4 viewportMatrix{};
-	Vector3 screenVertices[3];
+
+	Vector3 cameraDirection{ 0.0f,0.0f,1.0f };
+	Vector3 worldVertices[3]{};
+	Vector3 screenVertices[3]{};
 	Vector3 kLocalVertices[3]{ {0,10,0},{10,-10,0},{-10,-10,0} };
 	//
 	float speed = 3;
@@ -83,16 +85,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		rotate.y += speed / 50;
 		//
 		worldMatrix = MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
-		cameraMatrix = MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, { 0.0f,0.0f,0.0f }, cameraPosition);
+		cameraMatrix = MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cameraPosition);
 		viewMatrix = MyMtMatrix::Inverse(cameraMatrix);
 		projectionMatrix = MyMtMatrix::MakePerspectiveFovMatrix(0.45f, float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		worldViewProjectionMatrix = MyMtMatrix::Multiply(worldMatrix, MyMtMatrix::Multiply(viewMatrix, projectionMatrix));
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
+		
 		for (uint32_t i = 0; i < 3; ++i) {
+			worldVertices[i] = MyMtMatrix::Transform(kLocalVertices[i], worldMatrix);
 			Vector3 ndcVertex = MyMtMatrix::Transform(kLocalVertices[i], worldViewProjectionMatrix);
 			screenVertices[i] = MyMtMatrix::Transform(ndcVertex, viewportMatrix);
 		}
 
+		cross = Cross(MyMtVector3::Subtract(worldVertices[1], worldVertices[0]), MyMtVector3::Subtract(worldVertices[2], worldVertices[1]));
 		///
 		/// ↑更新処理ここまで
 		///
@@ -101,10 +106,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		VectorScreenPrintf(0, 0, cross, "Cross");
-		Novice::DrawTriangle(
-			int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
-			int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid
-		);
+		if (MyMtVector3::Dot(cameraDirection, cross) <= 0) {
+			Novice::DrawTriangle(
+				int(screenVertices[0].x), int(screenVertices[0].y), int(screenVertices[1].x), int(screenVertices[1].y),
+				int(screenVertices[2].x), int(screenVertices[2].y), RED, kFillModeSolid
+			);
+		}
 		///
 		/// ↑描画処理ここまで
 		///
