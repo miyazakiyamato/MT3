@@ -110,7 +110,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Vector3 cameraTranslate{0.0f,1.9f,-6.49f};
 	Vector3 cameraRotate{0.26f,0.0f,0.0f};
-
+  
 	Matrix4x4 worldMatrix{};
 	Matrix4x4 cameraMatrix{};
 
@@ -118,6 +118,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 projectionMatrix{};
 	Matrix4x4 worldViewProjectionMatrix{};
 	Matrix4x4 viewportMatrix{};
+
 
 	Sphere sphere{
 		{0.0f,0.0f,0.0f},
@@ -158,7 +159,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, 0x000000ff);
-
 		///
 		/// ↑描画処理ここまで
 		///
