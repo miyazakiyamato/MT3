@@ -23,6 +23,14 @@ Vector3 MyMtVector3::Multiply(float scalar, const Vector3& v) {
 	v2.z = v.z * scalar;
 	return v2;
 }
+Vector3 MyMtVector3::Divide(float scalar, const Vector3& v)
+{
+	Vector3 v2;
+	v2.x = v.x / scalar;
+	v2.y = v.y / scalar;
+	v2.z = v.z / scalar;
+	return v2;
+}
 float MyMtVector3::Dot(const Vector3& v1, const Vector3& v2) {
 	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
