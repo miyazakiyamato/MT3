@@ -8,11 +8,6 @@
 
 const char kWindowTitle[] = "LD2B_07_ミヤザキ_ヤマト";
 
-//クロス積
-Vector3 Cross(const Vector3& v1, const Vector3& v2) {
-	Vector3 ab{ v1.y * v2.z - v1.z * v2.y,v1.z * v2.x - v1.x * v2.z,v1.x * v2.y - v1.y * v2.x };
-	return ab;
-}
 
 static const int kRowHeight = 20;
 static const int KColumnWidth = 60;
@@ -119,11 +114,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 worldViewProjectionMatrix{};
 	Matrix4x4 viewportMatrix{};
 
+	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
+	Vector3 point{ -1.5f,0.6f,0.6f };
 
-	Sphere sphere{
-		{0.0f,0.0f,0.0f},
-		1.0f
-	};
+	Vector3 project{};
+	Vector3 closestPoint{};
+
+	Sphere pointSphere{ point,0.01f };
+	Sphere closestPointSphere{ closestPoint,0.01f };
+
+	Vector3 start{};
+	Vector3 end{};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -144,11 +145,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		worldViewProjectionMatrix = MyMtMatrix::Multiply(worldMatrix, MyMtMatrix::Multiply(viewMatrix, projectionMatrix));
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
+		project = MyMtVector3::Project(MyMtVector3::Subtract(point, segment.origin), segment.diff);
+		closestPoint = MyMtVector3::ClosestPoint(point, segment);
+		
+		pointSphere = { point,0.01f };
+		closestPointSphere = { closestPoint,0.01f };
+		start = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
+		end = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), worldViewProjectionMatrix), viewportMatrix);
+
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
-		ImGui::DragFloat3("CameraRotate",&cameraRotate.x,0.01f);
-		ImGui::DragFloat3("SphereCenter", &sphere.center.x, 0.01f);
-		ImGui::DragFloat("SphereRadius", &sphere.radius, 0.01f);
+		ImGui::DragFloat3("point", &point.x, 0.01f);
+		ImGui::DragFloat3("segment.origin", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
+		ImGui::InputFloat3("Project", &project.x, "%.3f",ImGuiInputTextFlags_ReadOnly);
 		ImGui::End();
 		///
 		/// ↑更新処理ここまで
@@ -158,7 +167,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere, worldViewProjectionMatrix, viewportMatrix, 0x000000ff);
+		Novice::DrawLine((int)start.x, (int)start.y, (int)end.x, (int)end.y, WHITE);
+		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
+		DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
 		///
 		/// ↑描画処理ここまで
 		///
