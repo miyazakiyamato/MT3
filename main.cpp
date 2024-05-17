@@ -124,6 +124,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 worldViewProjectionMatrix{};
 	Matrix4x4 viewportMatrix{};
 
+	Segment segment{ {-2.0f,-1.0f,0.0f},{3.0f,2.0f,2.0f} };
+	Vector3 point{ -1.5f,0.6f,0.6f };
+
+	Vector3 project{};
+	Vector3 closestPoint{};
+
+	Sphere pointSphere{ point,0.01f };
+	Sphere closestPointSphere{ closestPoint,0.01f };
 
 	int mouseX = 0;
 	int mouseY = 0;
@@ -199,6 +207,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);
 		ImGui::DragFloat3("SphereCenter2", &sphere2.center.x, 0.01f);
 		ImGui::DragFloat("SphereRadius2", &sphere2.radius, 0.01f);
+
 		ImGui::End();
 		preMouse = mouse;
 		///
@@ -209,6 +218,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
+
 		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphereColor1);
 		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		///
