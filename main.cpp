@@ -8,6 +8,21 @@
 
 const char kWindowTitle[] = "LD2B_07_ミヤザキ_ヤマト";
 
+struct Sphere
+{
+	Vector3 center;
+	float radius;
+};
+//クロス積
+Vector3 Cross(const Vector3& v1, const Vector3& v2) {
+	Vector3 ab{ v1.y * v2.z - v1.z * v2.y,v1.z * v2.x - v1.x * v2.z,v1.x * v2.y - v1.y * v2.x };
+	return ab;
+}
+
+bool IsCollision(const Sphere& s1, const Sphere& s2) {
+	float distance = MyMtVector3::Length(MyMtVector3::Subtract(s2.center, s1.center));
+	return (distance <= (s1.radius + s2.radius) ? true : false);
+}
 
 static const int kRowHeight = 20;
 static const int KColumnWidth = 60;
@@ -25,11 +40,6 @@ void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label
 		}
 	}
 }
-struct Sphere
-{
-	Vector3 center;
-	float radius;
-};
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 	const uint32_t kSubdivision = 20;
 	const float kLonEvery = float(M_PI) * 2 / kSubdivision;
@@ -123,8 +133,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Sphere pointSphere{ point,0.01f };
 	Sphere closestPointSphere{ closestPoint,0.01f };
 
-	Vector3 start{};
-	Vector3 end{};
+	int mouseX = 0;
+	int mouseY = 0;
+	Vector3 mouse{};
+	Vector3 preMouse{};
+	Vector3 wheelVelocity{};
+
+	float kCameraSpeed = 0.03f;
+	Vector3 cameraVelocity{};
+
+	Sphere sphere1{
+		{0.0f,0.0f,0.0f},
+		1.0f
+	};
+	unsigned int sphereColor1 = 0xffffffff;
+	Sphere sphere2{
+		{1.0f,0.0f,1.5f},
+		0.5f
+	};
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -138,6 +165,32 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 		//
+		Novice::GetMousePosition(&mouseX, &mouseY);
+		mouse = { float(mouseX),float(-mouseY),0 };
+		wheelVelocity = MyMtMatrix::Transform({ 0,0,float(Novice::GetWheel()) / 400.0f }, MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate,{0,0,0}));
+		cameraTranslate = MyMtVector3::Add(cameraTranslate,wheelVelocity);
+
+		cameraVelocity = { 0,0,0 };
+		if (keys[DIK_A]) {
+			cameraVelocity.x -= kCameraSpeed;
+		}
+		if (keys[DIK_D]) {
+			cameraVelocity.x += kCameraSpeed;
+		}
+		if (keys[DIK_W]) {
+			cameraVelocity.y += kCameraSpeed;
+		}
+		if (keys[DIK_S]) {
+			cameraVelocity.y -= kCameraSpeed;
+		}
+		cameraVelocity = MyMtMatrix::Transform(cameraVelocity, MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, { 0,0,0 }));
+		cameraTranslate = MyMtVector3::Add(cameraTranslate,cameraVelocity);
+
+		if (Novice::IsPressMouse(0) && keys[DIK_LSHIFT]) {
+			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0 }));
+			cameraTranslate = MyMtVector3::Add(cameraTranslate, MyMtMatrix::Transform(MyMtVector3::Divide(120.0f, MyMtVector3::Subtract(preMouse, mouse)), MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, { 0,0,0 })));
+			//cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0}));
+		}
 		worldMatrix = MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 		cameraMatrix = MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cameraTranslate);
 		viewMatrix = MyMtMatrix::Inverse(cameraMatrix);
@@ -145,20 +198,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		worldViewProjectionMatrix = MyMtMatrix::Multiply(worldMatrix, MyMtMatrix::Multiply(viewMatrix, projectionMatrix));
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
-		project = MyMtVector3::Project(MyMtVector3::Subtract(point, segment.origin), segment.diff);
-		closestPoint = MyMtVector3::ClosestPoint(point, segment);
-		
-		pointSphere = { point,0.01f };
-		closestPointSphere = { closestPoint,0.01f };
-		start = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
-		end = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), worldViewProjectionMatrix), viewportMatrix);
+		sphereColor1 = IsCollision(sphere1, sphere2) == true ? 0xff0000ff : 0xffffffff;
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("point", &point.x, 0.01f);
-		ImGui::DragFloat3("segment.origin", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("segment.diff", &segment.diff.x, 0.01f);
-		ImGui::InputFloat3("Project", &project.x, "%.3f",ImGuiInputTextFlags_ReadOnly);
+		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
+		ImGui::DragFloat3("CameraRotate",&cameraRotate.x,0.01f);
+		ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
+		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);
+		ImGui::DragFloat3("SphereCenter2", &sphere2.center.x, 0.01f);
+		ImGui::DragFloat("SphereRadius2", &sphere2.radius, 0.01f);
+
 		ImGui::End();
+		preMouse = mouse;
 		///
 		/// ↑更新処理ここまで
 		///
@@ -167,9 +218,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		Novice::DrawLine((int)start.x, (int)start.y, (int)end.x, (int)end.y, WHITE);
-		DrawSphere(pointSphere, worldViewProjectionMatrix, viewportMatrix, RED);
-		DrawSphere(closestPointSphere, worldViewProjectionMatrix, viewportMatrix, BLACK);
+
+		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphereColor1);
+		DrawSphere(sphere2, worldViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		///
 		/// ↑描画処理ここまで
 		///
