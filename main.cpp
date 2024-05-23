@@ -41,6 +41,39 @@ bool IsCollision(const Sphere& sphere, const Plane& plane) {
 	}
 	return false;
 }
+bool IsCollision(const Line& line, const Plane& plane) {
+	float dot = MyMtVector3::Dot(plane.normal, line.diff);
+	if (dot == 0.0f) {
+		return false;
+	}
+	float t = (plane.distance - MyMtVector3::Dot(line.origin, plane.normal)) / dot;
+	if (t >= -1.0f && t <= 2.0f) {
+		return true;
+	}
+	return false;
+}
+bool IsCollision(const Ray& ray, const Plane& plane) {
+	float dot = MyMtVector3::Dot(plane.normal, ray.diff);
+	if (dot == 0.0f) {
+		return false;
+	}
+	float t = (plane.distance - MyMtVector3::Dot(ray.origin, plane.normal)) / dot;
+	if (t >= 0.0f && t <= 2.0f) {
+		return true;
+	}
+	return false;
+}
+bool IsCollision(const Segment& segment, const Plane& plane) {
+	float dot = MyMtVector3::Dot(plane.normal, segment.diff);
+	if (dot == 0.0f) {
+		return false;
+	}
+	float t = (plane.distance - MyMtVector3::Dot(segment.origin, plane.normal)) / dot;
+	if (t >= 0.0f && t <= 1.0f) {
+		return true;
+	}
+	return false;
+}
 
 static const int kRowHeight = 20;
 static const int KColumnWidth = 60;
@@ -176,7 +209,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0.0f,0.0f,0.0f},
 		1.0f
 	};
+	Segment segment{
+		{0.0f,0.0f,0.0f},
+		{1.0f,1.0f,1.0f},
+	};
+	Segment screneSegment{};
 	unsigned int sphereColor1 = 0xffffffff;
+	uint32_t segmentColor = 0xffffffff;
 	Plane plane{
 		{0.0f,1.0f,0.0f},
 		1.0f
@@ -221,6 +260,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			cameraTranslate = MyMtVector3::Add(cameraTranslate, MyMtMatrix::Transform(MyMtVector3::Divide(120.0f, MyMtVector3::Subtract(preMouse, mouse)), MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, { 0,0,0 })));
 			//cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0}));
 		}
+		if (keys[DIK_SPACE]) {
+			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0}));
+		}
 		worldMatrix = MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, rotate, translate);
 		cameraMatrix = MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cameraTranslate);
 		viewMatrix = MyMtMatrix::Inverse(cameraMatrix);
@@ -229,14 +271,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
 		sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
+		segmentColor = IsCollision(segment,plane) == true ? 0xff0000ff : 0xffffffff;
+		screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
+		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.diff, worldViewProjectionMatrix), viewportMatrix);
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
-		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);
+		/*ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
+		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);*/
 		ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
-		ImGui::DragFloat("PlaneDistance", &plane.distance, 0.01f);
+		ImGui::DragFloat("Plane.Distance", &plane.distance, 0.01f);
+		ImGui::DragFloat3("Segment.Origin", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);
 		plane.normal = MyMtVector3::Normalize(plane.normal);
 		ImGui::End();
 		preMouse = mouse;
@@ -248,7 +295,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphereColor1);
+		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphereColor1);
+		Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
 		///
 		/// ↑描画処理ここまで
