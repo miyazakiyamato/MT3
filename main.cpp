@@ -260,7 +260,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{1.0f,1.0f,1.0f},
 	};
 	Segment screneSegment{};
-	unsigned int sphereColor1 = 0xffffffff;
+	//unsigned int sphereColor1 = 0xffffffff;
 	uint32_t segmentColor = 0xffffffff;
 	/*Plane plane{
 		{0.0f,1.0f,0.0f},
