@@ -12,10 +12,6 @@ struct Segment {
 	Vector3 origin;
 	Vector3 diff;
 };
-struct Triangle
-{
-	Vector3 Vertices[3];
-};
 
 class MyMtVector3{
 public:

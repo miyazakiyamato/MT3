@@ -74,45 +74,7 @@ bool IsCollision(const Segment& segment, const Plane& plane) {
 	}
 	return false;
 }
-//Plane TriangleToPlane(triangle);
-Plane TriangleToPlane(const Triangle& triangle)
-{
-	// ベクトルv1,v2を求める
-	Vector3 v1 = MyMtVector3::Subtract(triangle.Vertices[1], triangle.Vertices[0]);
-	Vector3 v2 = MyMtVector3::Subtract(triangle.Vertices[2], triangle.Vertices[1]);
 
-	// 法線nを算出
-	Vector3 n = MyMtVector3::Normalize(Cross(v1, v2));
-
-	// 距離を求める
-	float d = MyMtVector3::Dot(triangle.Vertices[0], n);
-
-	return Plane{ n, d };
-}
-bool IsCollision(const Triangle& triangle, const Segment& segment) {
-	/*Vector3 v01 = MyMtVector3::Subtract(triangle.Vertices[1], triangle.Vertices[0]);
-	Vector3 v12 = MyMtVector3::Subtract(triangle.Vertices[2], triangle.Vertices[1]);
-	*/
-	Plane plane = TriangleToPlane(triangle);
-	/*plane.normal = MyMtVector3::Normalize(Cross(v01, v12));
-	plane.distance = MyMtVector3::Dot(triangle.Vertices[0], plane.normal);*/
-	if (IsCollision(segment, plane)) {
-		float dot = MyMtVector3::Dot(plane.normal, segment.diff);
-		float t = (plane.distance - MyMtVector3::Dot(segment.origin, plane.normal)) / dot;
-		Vector3 segmentP = MyMtVector3::Add(segment.origin, MyMtVector3::Multiply(t, segment.diff));
-
-		Vector3 cross01 = Cross(MyMtVector3::Subtract(triangle.Vertices[1], triangle.Vertices[0]), MyMtVector3::Subtract(segmentP, triangle.Vertices[1]));
-		Vector3 cross12 = Cross(MyMtVector3::Subtract(triangle.Vertices[2], triangle.Vertices[1]), MyMtVector3::Subtract(segmentP, triangle.Vertices[2]));
-		Vector3 cross20 = Cross(MyMtVector3::Subtract(triangle.Vertices[0], triangle.Vertices[2]), MyMtVector3::Subtract(segmentP, triangle.Vertices[0]));
-
-		if (MyMtVector3::Dot(cross01, plane.normal) >= 0.0f &&
-			MyMtVector3::Dot(cross12, plane.normal) >= 0.0f &&
-			MyMtVector3::Dot(cross20, plane.normal) >= 0.0f) {
-			return true;
-		}
-	}
-	return false;
-}
 static const int kRowHeight = 20;
 static const int KColumnWidth = 60;
 void VectorScreenPrintf(int x, int y, const Vector3& vector, const char* label) {
@@ -206,14 +168,6 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[3].x), int(points[3].y), color);
 	
 }
-void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
-	Vector3 points[3];
-	for (int32_t index = 0; index < 3; ++index) {
-
-		points[index] = MyMtMatrix::Transform(MyMtMatrix::Transform(triangle.Vertices[index], viewProjectionMatrix), viewportMatrix);
-	}
-	Novice::DrawTriangle(int(points[0].x), int(points[0].y), int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color, kFillModeWireFrame);
-}
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -262,15 +216,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Segment screneSegment{};
 	//unsigned int sphereColor1 = 0xffffffff;
 	uint32_t segmentColor = 0xffffffff;
-	/*Plane plane{
+	Plane plane{
 		{0.0f,1.0f,0.0f},
 		1.0f
-	};*/
-	Triangle triangle;
-	triangle.Vertices[0] = { -1.0f, 0, 0 };
-	triangle.Vertices[1] = { 0, 1.0f, 0 };
-	triangle.Vertices[2] = { 1.0f, 0, 0 };
-	unsigned int triangleColor = 0xffffffff;
+	};
+
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -320,26 +270,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		worldViewProjectionMatrix = MyMtMatrix::Multiply(worldMatrix, MyMtMatrix::Multiply(viewMatrix, projectionMatrix));
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
-		/*sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
-		segmentColor = IsCollision(segment, plane) == true ? 0xff0000ff : 0xffffffff;*/
-		triangleColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;
-
+		sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
+		segmentColor = IsCollision(segment,plane) == true ? 0xff0000ff : 0xffffffff;
 		screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
-		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), worldViewProjectionMatrix), viewportMatrix);
+		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.diff, worldViewProjectionMatrix), viewportMatrix);
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
 		/*ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
 		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);*/
-		/*ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
-		ImGui::DragFloat("Plane.Distance", &plane.distance, 0.01f);*/
-		ImGui::DragFloat3("Triangle.Vertices0", &triangle.Vertices[0].x, 0.01f);
-		ImGui::DragFloat3("Triangle.Vertices1", &triangle.Vertices[1].x, 0.01f);
-		ImGui::DragFloat3("Triangle.Vertices2", &triangle.Vertices[2].x, 0.01f);
+		ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
+		ImGui::DragFloat("Plane.Distance", &plane.distance, 0.01f);
 		ImGui::DragFloat3("Segment.Origin", &segment.origin.x, 0.01f);
 		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);
-		/*plane.normal = MyMtVector3::Normalize(plane.normal);*/
+		plane.normal = MyMtVector3::Normalize(plane.normal);
 		ImGui::End();
 		preMouse = mouse;
 		///
@@ -352,8 +297,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphereColor1);
 		Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
-		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
-		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, 0xffffffff);
+		DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
 		///
 		/// ↑描画処理ここまで
 		///
