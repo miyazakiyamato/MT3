@@ -74,28 +74,16 @@ bool IsCollision(const Segment& segment, const Plane& plane) {
 	}
 	return false;
 }
-//Plane TriangleToPlane(triangle);
-Plane TriangleToPlane(const Triangle& triangle)
-{
-	// ベクトルv1,v2を求める
-	Vector3 v1 = MyMtVector3::Subtract(triangle.Vertices[1], triangle.Vertices[0]);
-	Vector3 v2 = MyMtVector3::Subtract(triangle.Vertices[2], triangle.Vertices[1]);
-
-	// 法線nを算出
-	Vector3 n = MyMtVector3::Normalize(Cross(v1, v2));
-
-	// 距離を求める
-	float d = MyMtVector3::Dot(triangle.Vertices[0], n);
-
-	return Plane{ n, d };
-}
 bool IsCollision(const Triangle& triangle, const Segment& segment) {
-	/*Vector3 v01 = MyMtVector3::Subtract(triangle.Vertices[1], triangle.Vertices[0]);
+	// ベクトルv1,v2を求める
+	Vector3 v01 = MyMtVector3::Subtract(triangle.Vertices[1], triangle.Vertices[0]);
 	Vector3 v12 = MyMtVector3::Subtract(triangle.Vertices[2], triangle.Vertices[1]);
-	*/
-	Plane plane = TriangleToPlane(triangle);
-	/*plane.normal = MyMtVector3::Normalize(Cross(v01, v12));
-	plane.distance = MyMtVector3::Dot(triangle.Vertices[0], plane.normal);*/
+	Plane plane;
+	// 法線nを算出
+	plane.normal = MyMtVector3::Normalize(Cross(v01, v12));
+	// 距離を求める
+	plane.distance = MyMtVector3::Dot(triangle.Vertices[0], plane.normal);
+	
 	if (IsCollision(segment, plane)) {
 		float dot = MyMtVector3::Dot(plane.normal, segment.diff);
 		float t = (plane.distance - MyMtVector3::Dot(segment.origin, plane.normal)) / dot;
@@ -251,16 +239,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float kCameraSpeed = 0.03f;
 	Vector3 cameraVelocity{};
 
-	Sphere sphere1{
+	/*Sphere sphere1{
 		{0.0f,0.0f,0.0f},
 		1.0f
-	};
+	};*/
 	Segment segment{
 		{0.0f,0.0f,0.0f},
 		{1.0f,1.0f,1.0f},
 	};
 	Segment screneSegment{};
-	unsigned int sphereColor1 = 0xffffffff;
+	//unsigned int sphereColor1 = 0xffffffff;
 	uint32_t segmentColor = 0xffffffff;
 	/*Plane plane{
 		{0.0f,1.0f,0.0f},
@@ -322,7 +310,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		/*sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
 		segmentColor = IsCollision(segment, plane) == true ? 0xff0000ff : 0xffffffff;*/
-		triangleColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;
+		segmentColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;
 
 		screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
 		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), worldViewProjectionMatrix), viewportMatrix);
@@ -353,7 +341,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphereColor1);
 		Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
-		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, 0xffffffff);
+		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
 		///
 		/// ↑描画処理ここまで
 		///
