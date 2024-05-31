@@ -1,7 +1,7 @@
 #define _USE_MATH_DEFINES
 #include <Novice.h>
 #include <cstdint>
-#include <math.h>
+#include <cmath>
 #include "MyMtVector3.h"
 #include "MyMtMatrix.h"
 #include "imgui.h"
@@ -16,6 +16,11 @@ struct Sphere
 struct Plane {
 	Vector3 normal;
 	float distance;
+};
+struct AABB
+{
+	Vector3 min;
+	Vector3 max;
 };
 //クロス積
 Vector3 Cross(const Vector3& v1, const Vector3& v2) {
@@ -98,6 +103,14 @@ bool IsCollision(const Triangle& triangle, const Segment& segment) {
 			MyMtVector3::Dot(cross20, plane.normal) >= 0.0f) {
 			return true;
 		}
+	}
+	return false;
+}
+bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
+	if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x &&
+		aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y &&
+		aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
+		return true;
 	}
 	return false;
 }
@@ -202,6 +215,37 @@ void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatri
 	}
 	Novice::DrawTriangle(int(points[0].x), int(points[0].y), int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color, kFillModeWireFrame);
 }
+void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	Vector3 perpendiculars[8]{};
+	perpendiculars[0] = aabb.min;
+	perpendiculars[1] = { aabb.max.x,aabb.min.y,aabb.min.z };
+	perpendiculars[2] = { aabb.min.x,aabb.max.y,aabb.min.z };
+	perpendiculars[3] = { aabb.max.x,aabb.max.y,aabb.min.z };
+
+	perpendiculars[4] = { aabb.min.x,aabb.min.y,aabb.max.z };
+	perpendiculars[5] = { aabb.max.x,aabb.min.y,aabb.max.z };
+	perpendiculars[6] = { aabb.min.x,aabb.max.y,aabb.max.z };
+	perpendiculars[7] = aabb.max;
+
+	Vector3 points[8];
+	for (int32_t index = 0; index < 8; ++index) {
+		points[index] = MyMtMatrix::Transform(MyMtMatrix::Transform(perpendiculars[index], viewProjectionMatrix), viewportMatrix);
+	}
+	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[1].x, (int)points[1].y,color);
+	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[2].x, (int)points[2].y, color);
+	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[2].x, (int)points[2].y, color);
+	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[1].x, (int)points[1].y, color);
+
+	Novice::DrawLine((int)points[4].x, (int)points[4].y, (int)points[5].x, (int)points[5].y, color);
+	Novice::DrawLine((int)points[4].x, (int)points[4].y, (int)points[6].x, (int)points[6].y, color);
+	Novice::DrawLine((int)points[7].x, (int)points[7].y, (int)points[6].x, (int)points[6].y, color);
+	Novice::DrawLine((int)points[7].x, (int)points[7].y, (int)points[5].x, (int)points[5].y, color);
+
+	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[4].x, (int)points[4].y, color);
+	Novice::DrawLine((int)points[1].x, (int)points[1].y, (int)points[5].x, (int)points[5].y, color);
+	Novice::DrawLine((int)points[2].x, (int)points[2].y, (int)points[6].x, (int)points[6].y, color);
+	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[7].x, (int)points[7].y, color);
+}
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -243,22 +287,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		{0.0f,0.0f,0.0f},
 		1.0f
 	};*/
-	Segment segment{
+	/*Segment segment{
 		{0.0f,0.0f,0.0f},
 		{1.0f,1.0f,1.0f},
 	};
-	Segment screneSegment{};
+	Segment screneSegment{};*/
 	//unsigned int sphereColor1 = 0xffffffff;
-	uint32_t segmentColor = 0xffffffff;
+	/*uint32_t segmentColor = 0xffffffff;*/
 	/*Plane plane{
 		{0.0f,1.0f,0.0f},
 		1.0f
 	};*/
-	Triangle triangle;
+	/*Triangle triangle;
 	triangle.Vertices[0] = { -1.0f, 0, 0 };
 	triangle.Vertices[1] = { 0, 1.0f, 0 };
 	triangle.Vertices[2] = { 1.0f, 0, 0 };
-	unsigned int triangleColor = 0xffffffff;
+	unsigned int triangleColor = 0xffffffff;*/
+	AABB aabb1{
+		.min{-0.5f,-0.5f,-0.5f},
+		.max{0.0f,0.0f,0.0f},
+	};
+	AABB aabb2{
+		.min{0.2f,0.2f,0.2f},
+		.max{1.0f,1.0f,1.0f},
+	};
+	unsigned int aabb1Color = 0xffffffff;
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -310,10 +363,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 		/*sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
 		segmentColor = IsCollision(segment, plane) == true ? 0xff0000ff : 0xffffffff;*/
-		segmentColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;
+		/*segmentColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;*/
+		aabb1Color = IsCollision(aabb1,aabb2) == true ? 0xff0000ff : 0xffffffff;
 
-		screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
-		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), worldViewProjectionMatrix), viewportMatrix);
+		/*screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
+		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), worldViewProjectionMatrix), viewportMatrix);*/
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
@@ -322,12 +376,31 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);*/
 		/*ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
 		ImGui::DragFloat("Plane.Distance", &plane.distance, 0.01f);*/
-		ImGui::DragFloat3("Triangle.Vertices0", &triangle.Vertices[0].x, 0.01f);
+		/*plane.normal = MyMtVector3::Normalize(plane.normal);*/
+		/*ImGui::DragFloat3("Triangle.Vertices0", &triangle.Vertices[0].x, 0.01f);
 		ImGui::DragFloat3("Triangle.Vertices1", &triangle.Vertices[1].x, 0.01f);
 		ImGui::DragFloat3("Triangle.Vertices2", &triangle.Vertices[2].x, 0.01f);
 		ImGui::DragFloat3("Segment.Origin", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);
-		/*plane.normal = MyMtVector3::Normalize(plane.normal);*/
+		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);*/
+		ImGui::DragFloat3("AABB1.MIN", &aabb1.min.x, 0.01f);
+		ImGui::DragFloat3("AABB1.MAX", &aabb1.max.x, 0.01f);
+
+		ImGui::DragFloat3("AABB2.MIN", &aabb2.min.x, 0.01f);
+		ImGui::DragFloat3("AABB2.MAX", &aabb2.max.x, 0.01f);
+
+		aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
+		aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
+		aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
+		aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
+		aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
+		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
+
+		aabb2.min.x = (std::min)(aabb2.min.x, aabb2.max.x);
+		aabb2.max.x = (std::max)(aabb2.min.x, aabb2.max.x);
+		aabb2.min.y = (std::min)(aabb2.min.y, aabb2.max.y);
+		aabb2.max.y = (std::max)(aabb2.min.y, aabb2.max.y);
+		aabb2.min.z = (std::min)(aabb2.min.z, aabb2.max.z);
+		aabb2.max.z = (std::max)(aabb2.min.z, aabb2.max.z);
 		ImGui::End();
 		preMouse = mouse;
 		///
@@ -339,9 +412,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
 		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphereColor1);
-		Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
+		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
-		DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
+		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
+		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1Color);
+		DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		///
 		/// ↑描画処理ここまで
 		///
