@@ -5,6 +5,7 @@
 #include "MyMtVector3.h"
 #include "MyMtMatrix.h"
 #include "imgui.h"
+#include <algorithm>
 
 const char kWindowTitle[] = "LD2B_07_ミヤザキ_ヤマト";
 
@@ -110,6 +111,14 @@ bool IsCollision(const AABB& aabb1, const AABB& aabb2) {
 	if (aabb1.min.x <= aabb2.max.x && aabb1.max.x >= aabb2.min.x &&
 		aabb1.min.y <= aabb2.max.y && aabb1.max.y >= aabb2.min.y &&
 		aabb1.min.z <= aabb2.max.z && aabb1.max.z >= aabb2.min.z) {
+		return true;
+	}
+	return false;
+}
+bool IsCollision(const AABB& aabb, const Sphere& sphere) {
+	Vector3 closestPoint = MyMtVector3::Clamp(sphere.center, aabb.min, aabb.max);
+	float distance = MyMtVector3::Length(MyMtVector3::Subtract(closestPoint, sphere.center));
+	if (distance <= sphere.radius) {
 		return true;
 	}
 	return false;
@@ -283,10 +292,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float kCameraSpeed = 0.03f;
 	Vector3 cameraVelocity{};
 
-	/*Sphere sphere1{
+	Sphere sphere1{
 		{0.0f,0.0f,0.0f},
 		1.0f
-	};*/
+	};
 	/*Segment segment{
 		{0.0f,0.0f,0.0f},
 		{1.0f,1.0f,1.0f},
@@ -306,10 +315,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	AABB aabb1{
 		.min{-0.5f,-0.5f,-0.5f},
 		.max{0.0f,0.0f,0.0f},
-	};
-	AABB aabb2{
-		.min{0.2f,0.2f,0.2f},
-		.max{1.0f,1.0f,1.0f},
 	};
 	unsigned int aabb1Color = 0xffffffff;
 	// ウィンドウの×ボタンが押されるまでループ
@@ -364,7 +369,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/*sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
 		segmentColor = IsCollision(segment, plane) == true ? 0xff0000ff : 0xffffffff;*/
 		/*segmentColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;*/
-		aabb1Color = IsCollision(aabb1,aabb2) == true ? 0xff0000ff : 0xffffffff;
+		aabb1Color = IsCollision(aabb1,sphere1) == true ? 0xff0000ff : 0xffffffff;
 
 		/*screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
 		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), worldViewProjectionMatrix), viewportMatrix);*/
@@ -372,8 +377,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
-		/*ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
-		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);*/
+		ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
+		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);
 		/*ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
 		ImGui::DragFloat("Plane.Distance", &plane.distance, 0.01f);*/
 		/*plane.normal = MyMtVector3::Normalize(plane.normal);*/
@@ -384,23 +389,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);*/
 		ImGui::DragFloat3("AABB1.MIN", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.MAX", &aabb1.max.x, 0.01f);
-
-		ImGui::DragFloat3("AABB2.MIN", &aabb2.min.x, 0.01f);
-		ImGui::DragFloat3("AABB2.MAX", &aabb2.max.x, 0.01f);
-
 		aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
 		aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
 		aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
 		aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
 		aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
 		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);
-
-		aabb2.min.x = (std::min)(aabb2.min.x, aabb2.max.x);
-		aabb2.max.x = (std::max)(aabb2.min.x, aabb2.max.x);
-		aabb2.min.y = (std::min)(aabb2.min.y, aabb2.max.y);
-		aabb2.max.y = (std::max)(aabb2.min.y, aabb2.max.y);
-		aabb2.min.z = (std::min)(aabb2.min.z, aabb2.max.z);
-		aabb2.max.z = (std::max)(aabb2.min.z, aabb2.max.z);
 		ImGui::End();
 		preMouse = mouse;
 		///
@@ -411,12 +405,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, sphereColor1);
+		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
 		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1Color);
-		DrawAABB(aabb2, worldViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		///
 		/// ↑描画処理ここまで
 		///
