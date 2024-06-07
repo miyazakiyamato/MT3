@@ -63,13 +63,30 @@ Vector3 MyMtVector3::Project(const Vector3& v1, const Vector3& v2)
 Vector3 MyMtVector3::Min(const Vector3& v, const Vector3& min)
 {
 	Vector3 v2 = v;
+	v2.x = v2.x < min.x ? v2.x : min.x;
+	v2.y = v2.y < min.y ? v2.y : min.y;
+	v2.z = v2.z < min.z ? v2.z : min.z;
+	return v2;
+}
+
+Vector3 MyMtVector3::Max(const Vector3& v, const Vector3& max)
+{
+	Vector3 v2 = v;
+	v2.x = v2.x > max.x ? v2.x :max.x;
+	v2.y = v2.y > max.y ? v2.y : max.y;
+	v2.z = v2.z > max.z ? v2.z : max.z;
+	return v2;
+}
+Vector3 MyMtVector3::ClampMin(const Vector3& v, const Vector3& min)
+{
+	Vector3 v2 = v;
 	v2.x = v2.x < min.x ? min.x : v2.x;
 	v2.y = v2.y < min.y ? min.y : v2.y;
 	v2.z = v2.z < min.z ? min.z : v2.z;
 	return v2;
 }
 
-Vector3 MyMtVector3::Max(const Vector3& v, const Vector3& max)
+Vector3 MyMtVector3::ClampMax(const Vector3& v, const Vector3& max)
 {
 	Vector3 v2 = v;
 	v2.x = v2.x > max.x ? max.x : v2.x;
@@ -77,12 +94,11 @@ Vector3 MyMtVector3::Max(const Vector3& v, const Vector3& max)
 	v2.z = v2.z > max.z ? max.z : v2.z;
 	return v2;
 }
-
 Vector3 MyMtVector3::Clamp(const Vector3& v, const Vector3& min, const Vector3& max)
 {
 	Vector3 v2 = v;
-	v2 = Min(v2, min);
-	v2 = Max(v2, max);
+	v2 = ClampMin(v2, min);
+	v2 = ClampMax(v2, max);
 	return v2;
 }
 
@@ -97,7 +113,7 @@ Vector3 MyMtVector3::ClosestPoint(const Vector3& point, const Ray& ray)
 {
 	Vector3 v3;
 	v3 = Add(ray.origin, Project(Subtract(point, ray.origin), ray.diff));
-	v3 = Min(v3, ray.origin);
+	v3 = ClampMin(v3, ray.origin);
 	return v3;
 }
 
