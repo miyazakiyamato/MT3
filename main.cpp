@@ -123,6 +123,26 @@ bool IsCollision(const AABB& aabb, const Sphere& sphere) {
 	}
 	return false;
 }
+bool IsCollision(const AABB& aabb, const Segment& segment) {
+	Vector3 tMin = {
+		(aabb.min.x - segment.origin.x) / segment.diff.x,
+		(aabb.min.y - segment.origin.y) / segment.diff.y,
+		(aabb.min.z - segment.origin.z) / segment.diff.z };
+	Vector3 tMax = {
+		(aabb.max.x - segment.origin.x) / segment.diff.x,
+		(aabb.max.y - segment.origin.y) / segment.diff.y,
+		(aabb.max.z - segment.origin.z) / segment.diff.z };
+	Vector3 tNear = MyMtVector3::Min(tMin, tMax);
+	Vector3 tFar = MyMtVector3::Max(tMin, tMax);
+	float tmin = max(max(tNear.x, tNear.y), tNear.z);
+	float tmax = min(min(tFar.x, tFar.y), tFar.z);
+	if (tmin <= tmax) {
+		if ((tmin >= 0 && tmin <= 1) || (tmax >= 0 && tmax <= 1)) {
+			return true;
+		}
+	}
+	return false;
+}
 static const int kRowHeight = 20;
 static const int KColumnWidth = 60;
 void VectorScreenPrintf(int x, int y, const Vector3& vector, const char* label) {
@@ -292,17 +312,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float kCameraSpeed = 0.03f;
 	Vector3 cameraVelocity{};
 
-	Sphere sphere1{
+	/*Sphere sphere1{
 		{0.0f,0.0f,0.0f},
 		1.0f
-	};
-	/*Segment segment{
+	};*/
+	Segment segment{
 		{0.0f,0.0f,0.0f},
 		{1.0f,1.0f,1.0f},
 	};
-	Segment screneSegment{};*/
+	Segment screneSegment{};
 	//unsigned int sphereColor1 = 0xffffffff;
-	/*uint32_t segmentColor = 0xffffffff;*/
+	uint32_t segmentColor = 0xffffffff;
 	/*Plane plane{
 		{0.0f,1.0f,0.0f},
 		1.0f
@@ -314,7 +334,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	unsigned int triangleColor = 0xffffffff;*/
 	AABB aabb1{
 		.min{-0.5f,-0.5f,-0.5f},
-		.max{0.0f,0.0f,0.0f},
+		.max{0.5f,0.5f,0.5f},
 	};
 	unsigned int aabb1Color = 0xffffffff;
 	// ウィンドウの×ボタンが押されるまでループ
@@ -369,24 +389,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/*sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
 		segmentColor = IsCollision(segment, plane) == true ? 0xff0000ff : 0xffffffff;*/
 		/*segmentColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;*/
-		aabb1Color = IsCollision(aabb1,sphere1) == true ? 0xff0000ff : 0xffffffff;
+		//aabb1Color = IsCollision(aabb1,sphere1) == true ? 0xff0000ff : 0xffffffff;
+		aabb1Color = IsCollision(aabb1, segment) == true ? 0xff0000ff : 0xffffffff;
 
-		/*screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
-		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), worldViewProjectionMatrix), viewportMatrix);*/
+		screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin, worldViewProjectionMatrix), viewportMatrix);
+		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), worldViewProjectionMatrix), viewportMatrix);
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
 		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
-		ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
-		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);
+		/*ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
+		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);*/
 		/*ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
 		ImGui::DragFloat("Plane.Distance", &plane.distance, 0.01f);*/
 		/*plane.normal = MyMtVector3::Normalize(plane.normal);*/
 		/*ImGui::DragFloat3("Triangle.Vertices0", &triangle.Vertices[0].x, 0.01f);
 		ImGui::DragFloat3("Triangle.Vertices1", &triangle.Vertices[1].x, 0.01f);
-		ImGui::DragFloat3("Triangle.Vertices2", &triangle.Vertices[2].x, 0.01f);
+		ImGui::DragFloat3("Triangle.Vertices2", &triangle.Vertices[2].x, 0.01f);*/
 		ImGui::DragFloat3("Segment.Origin", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);*/
+		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);
 		ImGui::DragFloat3("AABB1.MIN", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.MAX", &aabb1.max.x, 0.01f);
 		aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
@@ -405,8 +426,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(worldViewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, 0xffffffff);
-		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
+		//DrawSphere(sphere1, worldViewProjectionMatrix, viewportMatrix, 0xffffffff);
+		Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
 		DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1Color);
