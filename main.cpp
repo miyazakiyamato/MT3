@@ -143,7 +143,7 @@ bool IsCollision(const AABB& aabb, const Segment& segment) {
 	float tmin = max(max(tNear.x, tNear.y), tNear.z);
 	float tmax = min(min(tFar.x, tFar.y), tFar.z);
 	if (tmin <= tmax) {
-		if ((tmin >= 0 && tmin <= 1) || (tmax >= 0 && tmax <= 1)) {
+		if ((tmin >= 0 && tmin <= 1) || (tmax >= 0 && tmax <= 1) || tmin < 0 && tmax > 1) {
 			return true;
 		}
 	}
