@@ -40,6 +40,23 @@ Vector3 Perpendicular(const Vector3& vector) {
 	}
 	return { 0.0f,-vector.z,vector.y };
 }
+OBB MakeOBBRotate(const OBB& obb,const Vector3& rotate){
+	OBB obb2 = obb;
+	Matrix4x4 obbRotateMatrix = MyMtMatrix::Multiply(MyMtMatrix::Multiply(MyMtMatrix::MakeRotateXMatrix(rotate.x), MyMtMatrix::MakeRotateYMatrix(rotate.y)), MyMtMatrix::MakeRotateZMatrix(rotate.z));
+	obb2.orientations[0] = {
+		obbRotateMatrix.m[0][0],
+		obbRotateMatrix.m[0][1],
+		obbRotateMatrix.m[0][2] };
+	obb2.orientations[1] = {
+		obbRotateMatrix.m[1][0],
+		obbRotateMatrix.m[1][1],
+		obbRotateMatrix.m[1][2] };
+	obb2.orientations[2] = {
+		obbRotateMatrix.m[2][0],
+		obbRotateMatrix.m[2][1],
+		obbRotateMatrix.m[2][2] };
+	return obb2;
+}
 
 bool IsCollision(const Sphere& s1, const Sphere& s2) {
 	float distance = MyMtVector3::Length(MyMtVector3::Subtract(s2.center, s1.center));
@@ -242,6 +259,116 @@ bool IsCollision(const Line& line, const OBB& obb) {
 	localLine.diff = MyMtVector3::Subtract(localEnd, localOrigin);
 
 	return IsCollision(localAABB, localLine);
+}
+// 分離軸に投影された軸成分から投影線分長を算出
+float LenSegOnSeparateAxis(const Vector3& Sep, const Vector3& e1, const Vector3& e2, Vector3 e3 = { -1,-1,-1 })
+{
+	// 3つの内積の絶対値の和で投影線分長を計算
+	float r1 = fabsf(MyMtVector3::Dot(Sep, e1));
+	float r2 = fabsf(MyMtVector3::Dot(Sep, e2));
+	float r3;
+	if (e3.x == -1 && e3.y == -1 && e3.z == -1) {
+		r3 = 0;
+	}
+	else {
+		r3 = fabsf(MyMtVector3::Dot(Sep, e3));
+	}
+	return r1 + r2 + r3;
+}
+bool IsCollision(const OBB& obb1, const OBB& obb2) {
+	// 各方向ベクトルの確保
+	Vector3 NAe[3], NBe[3],Ae[3],Be[3];
+	float size1[3] = { obb1.size.x,obb1.size.y,obb1.size.z };
+	float size2[3] = { obb2.size.x,obb2.size.y,obb2.size.z };
+	for (size_t i = 0; i < 3; i++)
+	{
+		NAe[i] = obb1.orientations[i], Ae[i] = MyMtVector3::Multiply(size1[i], NAe[i]);
+		NBe[i] = obb2.orientations[i], Be[i] = MyMtVector3::Multiply(size2[i], NBe[i]);
+	}
+	Vector3 Interval = MyMtVector3::Subtract(obb1.center, obb2.center);
+	float rA, rB, L;
+	for (size_t i = 0; i < 3; i++)
+	{
+		// 分離軸 : Ae
+		rA = MyMtVector3::Length(Ae[i]);
+		rB = LenSegOnSeparateAxis(NAe[i], Be[0], Be[1], Be[2]);
+		L = fabs(MyMtVector3::Dot(Interval, NAe[i]));
+		if (L > rA + rB)return false;
+	}
+	for (size_t i = 0; i < 3; i++)
+	{
+		// 分離軸 : Be
+		rA = LenSegOnSeparateAxis(NBe[i], Ae[0], Ae[1], Ae[2]);
+		rB = MyMtVector3::Length(Be[i]); 
+		L = fabs(MyMtVector3::Dot(Interval, NBe[i]));
+		if (L > rA + rB)return false;
+	}
+
+	// 分離軸 : A1B3
+	Vector3 Cross1;
+	Cross1 = Cross(NAe[0], NBe[0]);
+	rA = LenSegOnSeparateAxis(Cross1, Ae[1], Ae[2]);
+	rB = LenSegOnSeparateAxis(Cross1, Be[1], Be[2]);
+	L = fabs(MyMtVector3::Dot(Interval, Cross1));
+	if (L > rA + rB)return false;
+
+	// 分離軸 : A1B2
+	Cross1 = Cross(NAe[0], NBe[1]);
+	rA = LenSegOnSeparateAxis(Cross1, Ae[1], Ae[2]);
+	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[2]);
+	L = fabs(MyMtVector3::Dot(Interval, Cross1));
+	if (L > rA + rB)return false;
+
+	// 分離軸 : A1B3
+	Cross1 = Cross(NAe[0], NBe[2]);
+	rA = LenSegOnSeparateAxis(Cross1, Ae[1], Ae[2]);
+	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[1]);
+	L = fabs(MyMtVector3::Dot(Interval, Cross1));
+	if (L > rA + rB)return false;
+
+	// 分離軸 : A2B1
+	Cross1 = Cross(NAe[1], NBe[0]);
+	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[2]);
+	rB = LenSegOnSeparateAxis(Cross1, Be[1], Be[2]);
+	L = fabs(MyMtVector3::Dot(Interval, Cross1));
+	if (L > rA + rB)return false;
+
+	// 分離軸 : A2B2
+	Cross1 = Cross(NAe[1], NBe[1]);
+	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[2]);
+	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[2]);
+	L = fabs(MyMtVector3::Dot(Interval, Cross1));
+	if (L > rA + rB)return false;
+
+	// 分離軸 : A2B3
+	Cross1 = Cross(NAe[1], NBe[2]);
+	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[2]);
+	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[1]);
+	L = fabs(MyMtVector3::Dot(Interval, Cross1));
+	if (L > rA + rB)return false;
+
+	// 分離軸 : A3B1
+	Cross1 = Cross(NAe[2], NBe[0]);
+	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[1]);
+	rB = LenSegOnSeparateAxis(Cross1, Be[1], Be[2]);
+	L = fabs(MyMtVector3::Dot(Interval, Cross1));
+	if (L > rA + rB)return false;
+
+	// 分離軸 : A3B2
+	Cross1 = Cross(NAe[2], NBe[1]);
+	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[1]);
+	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[2]);
+	L = fabs(MyMtVector3::Dot(Interval, Cross1));
+	if (L > rA + rB)return false;
+
+	// 分離軸 : A3B3
+	Cross1 = Cross(NAe[2], NBe[2]);
+	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[1]);
+	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[1]);
+	L = fabs(MyMtVector3::Dot(Interval, Cross1));
+	if (L > rA + rB)return false;
+
+	return true;
 }
 static const int kRowHeight = 20;
 static const int KColumnWidth = 60;
@@ -451,12 +578,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		0.5f
 	};*/
 	//uint32_t sphereColor1 = 0xffffffff;
-	Segment segment{
+	/*Segment segment{
 		.origin{-0.8f,-0.3f,0.0f},
 		.diff{0.5f,0.5f,0.5f},
 	};
 	Segment screneSegment{};
-	uint32_t segmentColor = 0xffffffff;
+	uint32_t segmentColor = 0xffffffff;*/
 	/*Plane plane{
 		{0.0f,1.0f,0.0f},
 		1.0f
@@ -474,13 +601,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 obbRotate{ 0.0f,0.0f,0.0f };
 	Matrix4x4 obbRotateMatrix{};
 	OBB obb{
-		.center{-1.0f,0.0f,0.0f},
+		.center{0.0f,0.0f,0.0f},
 		.orientations = {{1.0f,0.0f,0.0f},
 						 {0.0f,1.0f,0.0f},
 						 {0.0f,0.0f,1.0f}},
 		.size{0.5f,0.5f,0.5f}
 	};
 	uint32_t obbColor = 0xffffffff;
+	Vector3 obbRotate2{ -0.5f,-2.49f,0.15f };
+	OBB obb2{
+		.center{0.9f,0.66f,0.78f},
+		.orientations = {{1.0f,0.0f,0.0f},
+						 {0.0f,1.0f,0.0f},
+						 {0.0f,0.0f,1.0f}},
+		.size{0.5f,0.37f,0.5f}
+	};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -529,29 +664,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ViewProjectionMatrix = MyMtMatrix::Multiply(viewMatrix, projectionMatrix);
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
-		obbRotateMatrix = MyMtMatrix::Multiply(MyMtMatrix::Multiply(MyMtMatrix::MakeRotateXMatrix(obbRotate.x), MyMtMatrix::MakeRotateYMatrix(obbRotate.y)), MyMtMatrix::MakeRotateZMatrix(obbRotate.z));
-		obb.orientations[0] = {
-			obbRotateMatrix.m[0][0],
-			obbRotateMatrix.m[0][1],
-			obbRotateMatrix.m[0][2]};
-		obb.orientations[1] = {
-			obbRotateMatrix.m[1][0],
-			obbRotateMatrix.m[1][1],
-			obbRotateMatrix.m[1][2] };
-		obb.orientations[2] = {
-			obbRotateMatrix.m[2][0],
-			obbRotateMatrix.m[2][1],
-			obbRotateMatrix.m[2][2] };
+		obb = MakeOBBRotate(obb, obbRotate);
+		obb2 = MakeOBBRotate(obb2, obbRotate2);
 		/*sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
 		segmentColor = IsCollision(segment, plane) == true ? 0xff0000ff : 0xffffffff;*/
 		/*segmentColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;*/
 		//aabb1Color = IsCollision(aabb1,sphere1) == true ? 0xff0000ff : 0xffffffff;
 		//aabb1Color = IsCollision(aabb1, segment) == true ? 0xff0000ff : 0xffffffff;
 		//obbColor = IsCollision(obb,sphere1) == true ? 0xff0000ff : 0xffffffff;
-		obbColor = IsCollision(segment,obb) == true ? 0xff0000ff : 0xffffffff;
+		obbColor = IsCollision(obb,obb2) == true ? 0xff0000ff : 0xffffffff;
 
-		screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin,ViewProjectionMatrix), viewportMatrix);
-		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff),ViewProjectionMatrix), viewportMatrix);
+		/*screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin,ViewProjectionMatrix), viewportMatrix);
+		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff),ViewProjectionMatrix), viewportMatrix);*/
 
 		ImGui::Begin("Window");
 		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
@@ -568,8 +692,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("Triangle.Vertices1", &triangle.Vertices[1].x, 0.01f);
 		ImGui::DragFloat3("Triangle.Vertices2", &triangle.Vertices[2].x, 0.01f);*/
 
-		ImGui::DragFloat3("Segment.Origin", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);
+		/*ImGui::DragFloat3("Segment.Origin", &segment.origin.x, 0.01f);
+		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);*/
 
 		/*ImGui::DragFloat3("AABB1.MIN", &aabb1.min.x, 0.01f);
 		ImGui::DragFloat3("AABB1.MAX", &aabb1.max.x, 0.01f);*/
@@ -589,6 +713,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("OBB.Orientations[1]", &obb.orientations[1].x, 0.01f);
 		ImGui::DragFloat3("OBB.Orientations[2]", &obb.orientations[2].x, 0.01f);
 		ImGui::DragFloat3("OBB.Size", &obb.size.x, 0.01f);
+
+		ImGui::DragFloat("OBB2.Rotate.x", &obbRotate2.x, 0.01f);
+		ImGui::DragFloat("OBB2.Rotate.y", &obbRotate2.y, 0.01f);
+		ImGui::DragFloat("OBB2.Rotate.z", &obbRotate2.z, 0.01f);
+
+		ImGui::DragFloat3("OBB2.Center", &obb2.center.x, 0.01f);
+		ImGui::DragFloat3("OBB2.Orientations[0]", &obb2.orientations[0].x, 0.01f);
+		ImGui::DragFloat3("OBB2.Orientations[1]", &obb2.orientations[1].x, 0.01f);
+		ImGui::DragFloat3("OBB2.Orientations[2]", &obb2.orientations[2].x, 0.01f);
+		ImGui::DragFloat3("OBB2.Size", &obb2.size.x, 0.01f);
 		ImGui::End();
 		preMouse = mouse;
 		///
@@ -600,11 +734,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		DrawGrid(ViewProjectionMatrix, viewportMatrix);
 		//DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
-		Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
+		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
 		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1Color);
 		DrawOBB(obb, ViewProjectionMatrix, viewportMatrix, obbColor);
+		DrawOBB(obb2, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		///
 		/// ↑描画処理ここまで
 		///

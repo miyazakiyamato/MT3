@@ -28,8 +28,9 @@ public:
 	static Vector3 Normalize(const Vector3& v);
 	static Vector3 Cross(const Vector3& v1, const Vector3& v2);
 	static Vector3 Project(const Vector3& v1, const Vector3& v2);
-	static Vector3 Min(const Vector3& v, const Vector3& min);
-	static Vector3 Max(const Vector3& v, const Vector3& max);
+	static Vector3 Min(const Vector3& v, const Vector3& v2);
+	static Vector3 Max(const Vector3& v, const Vector3& v2);
+	static Vector3 Abs(const Vector3& v);
 	static Vector3 ClampMin(const Vector3& v, const Vector3& min);
 	static Vector3 ClampMax(const Vector3& v, const Vector3& max);
 	static Vector3 Clamp(const Vector3& v,const Vector3& min,const Vector3& max);

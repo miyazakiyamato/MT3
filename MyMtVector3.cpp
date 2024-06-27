@@ -60,21 +60,29 @@ Vector3 MyMtVector3::Project(const Vector3& v1, const Vector3& v2)
 	return v3;
 }
 
-Vector3 MyMtVector3::Min(const Vector3& v, const Vector3& min)
+Vector3 MyMtVector3::Min(const Vector3& v, const Vector3& v2)
 {
-	Vector3 v2 = v;
-	v2.x = v2.x < min.x ? v2.x : min.x;
-	v2.y = v2.y < min.y ? v2.y : min.y;
-	v2.z = v2.z < min.z ? v2.z : min.z;
-	return v2;
+	Vector3 v3;
+	v3.x = v.x < v2.x ? v.x : v2.x;
+	v3.y = v.y < v2.y ? v.y : v2.y;
+	v3.z = v.z < v2.z ? v.z : v2.z;
+	return v3;
 }
 
-Vector3 MyMtVector3::Max(const Vector3& v, const Vector3& max)
+Vector3 MyMtVector3::Max(const Vector3& v, const Vector3& v2)
 {
-	Vector3 v2 = v;
-	v2.x = v2.x > max.x ? v2.x :max.x;
-	v2.y = v2.y > max.y ? v2.y : max.y;
-	v2.z = v2.z > max.z ? v2.z : max.z;
+	Vector3 v3 = v;
+	v3.x = v.x > v2.x ? v.x : v2.x;
+	v3.y = v.y > v2.y ? v.y : v2.y;
+	v3.z = v.z > v2.z ? v.z : v2.z;
+	return v3;
+}
+Vector3 MyMtVector3::Abs(const Vector3& v)
+{
+	Vector3 v2;
+	v2.x = sqrtf(v.x * v.x);
+	v2.y = sqrtf(v.y * v.y);
+	v2.z = sqrtf(v.z * v.z);
 	return v2;
 }
 Vector3 MyMtVector3::ClampMin(const Vector3& v, const Vector3& min)
