@@ -37,5 +37,9 @@ public:
 	static Vector3 ClosestPoint(const Vector3& point, const Line& line);
 	static Vector3 ClosestPoint(const Vector3& point, const Ray& ray);
 	static Vector3 ClosestPoint(const Vector3& point, const Segment& segment);
+	static Vector3 Lerp(const Vector3& v1, const Vector3& v2, float t);
+	
+	
+	
 };
-
+Vector3 operator+(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Add(v1, v2); }

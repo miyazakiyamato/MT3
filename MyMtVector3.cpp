@@ -132,3 +132,10 @@ Vector3 MyMtVector3::ClosestPoint(const Vector3& point, const Segment& segment)
 	v3 = Clamp(v3, segment.origin, Add(segment.origin, segment.diff));
 	return v3;
 }
+
+Vector3 MyMtVector3::Lerp(const Vector3& v1, const Vector3& v2, float t)
+{
+	Vector3 v3;
+	v3 = Add(v1, Multiply(t, Subtract(v2, v1)));
+	return v3;
+}
