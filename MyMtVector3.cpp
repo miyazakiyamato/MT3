@@ -1,5 +1,6 @@
-#include "MyMtVector3.h"
-#include <math.h>
+﻿#include "MyMtVector3.h"
+#include <cmath>
+#include <cassert>
 
 Vector3 MyMtVector3::Add(const Vector3& v1, const Vector3& v2) {
 	Vector3 v3;
@@ -138,4 +139,22 @@ Vector3 MyMtVector3::Lerp(const Vector3& v1, const Vector3& v2, float t)
 	Vector3 v3;
 	v3 = Add(v1, Multiply(t, Subtract(v2, v1)));
 	return v3;
+}
+Vector3 MyMtVector3::CatmullRomInterpolation(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Vector3& p3,const float& t) {
+	const float s = 0.5f; // 数式に出てくる 1/2 のこと。
+
+	float t2 = t * t;  // t の2乗
+	float t3 = t2 * t; // t の3乗
+
+	Vector3 e3 = Add(Subtract(Add(Multiply(-1.f, p0), Multiply(3.0f, p1)), Multiply(3.0f, p2)), p3);
+
+	Vector3 e2 = Subtract(Add(Subtract(Multiply(2.0f, p0), Multiply(5.0f, p1)), Multiply(4.0f, p2)), p3);
+
+	Vector3 e1 = Add(Multiply(-1.0f, p0), p2);
+
+	Vector3 e0 = Multiply(2.0f, p1);
+
+	Vector3 ans = Add(Add(Add(Multiply(t3, e3), Multiply(t2, e2)), Multiply(t, e1)), e0);
+
+	return Multiply(s, ans);
 }
