@@ -43,7 +43,7 @@ Vector3 Perpendicular(const Vector3& vector) {
 	}
 	return { 0.0f,-vector.z,vector.y };
 }
-OBB MakeOBBRotate(const OBB& obb,const Vector3& rotate){
+OBB MakeOBBRotate(const OBB& obb, const Vector3& rotate) {
 	OBB obb2 = obb;
 	Matrix4x4 obbRotateMatrix = MyMtMatrix::Multiply(MyMtMatrix::Multiply(MyMtMatrix::MakeRotateXMatrix(rotate.x), MyMtMatrix::MakeRotateYMatrix(rotate.y)), MyMtMatrix::MakeRotateZMatrix(rotate.z));
 	obb2.orientations[0] = {
@@ -115,7 +115,7 @@ bool IsCollision(const Triangle& triangle, const Segment& segment) {
 	plane.normal = MyMtVector3::Normalize(Cross(v01, v12));
 	// 距離を求める
 	plane.distance = MyMtVector3::Dot(triangle.Vertices[0], plane.normal);
-	
+
 	if (IsCollision(segment, plane)) {
 		float dot = MyMtVector3::Dot(plane.normal, segment.diff);
 		float t = (plane.distance - MyMtVector3::Dot(segment.origin, plane.normal)) / dot;
@@ -217,12 +217,12 @@ bool IsCollision(const OBB& obb, const Sphere& sphere) {
 	Vector3 centerInObbLocalSpace = MyMtMatrix::Transform(sphere.center, MyMtMatrix::Inverse(obbWorldMatrix));
 	AABB aabbOBBLocal{ .min = MyMtVector3::Multiply(-1.0,obb.size),.max = obb.size };
 	Sphere sphereOBBLocal{ centerInObbLocalSpace,sphere.radius };
-	if (IsCollision(aabbOBBLocal,sphereOBBLocal)) {
+	if (IsCollision(aabbOBBLocal, sphereOBBLocal)) {
 		return true;
 	}
 	return false;
 }
-bool IsCollision(const Segment& segment,const OBB& obb) {
+bool IsCollision(const Segment& segment, const OBB& obb) {
 	Matrix4x4 obbWorldMatrix{
 		obb.orientations[0].x,obb.orientations[1].x,obb.orientations[2].x,0,
 		obb.orientations[0].y,obb.orientations[1].y,obb.orientations[2].y,0,
@@ -230,15 +230,15 @@ bool IsCollision(const Segment& segment,const OBB& obb) {
 		obb.center.x,obb.center.y,obb.center.z,1
 	};
 	Vector3 localOrigin = MyMtMatrix::Transform(segment.origin, MyMtMatrix::Inverse(obbWorldMatrix));
-	Vector3 localEnd = MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff), MyMtMatrix::Inverse(obbWorldMatrix));
+	Vector3 localEnd = MyMtMatrix::Transform(MyMtVector3::Add(segment.origin, segment.diff), MyMtMatrix::Inverse(obbWorldMatrix));
 
 	AABB localAABB{ .min = MyMtVector3::Multiply(-1.0,obb.size),.max = obb.size };
-	
+
 	Segment localSegment;
-	
+
 	localSegment.origin = localOrigin;
 	localSegment.diff = MyMtVector3::Subtract(localEnd, localOrigin);
-	
+
 	if (IsCollision(localAABB, localSegment)) {
 		return true;
 	}
@@ -280,7 +280,7 @@ float LenSegOnSeparateAxis(const Vector3& Sep, const Vector3& e1, const Vector3&
 }
 bool IsCollision(const OBB& obb1, const OBB& obb2) {
 	// 各方向ベクトルの確保
-	Vector3 NAe[3], NBe[3],Ae[3],Be[3];
+	Vector3 NAe[3], NBe[3], Ae[3], Be[3];
 	float size1[3] = { obb1.size.x,obb1.size.y,obb1.size.z };
 	float size2[3] = { obb2.size.x,obb2.size.y,obb2.size.z };
 	for (size_t i = 0; i < 3; i++)
@@ -302,7 +302,7 @@ bool IsCollision(const OBB& obb1, const OBB& obb2) {
 	{
 		// 分離軸 : Be
 		rA = LenSegOnSeparateAxis(NBe[i], Ae[0], Ae[1], Ae[2]);
-		rB = MyMtVector3::Length(Be[i]); 
+		rB = MyMtVector3::Length(Be[i]);
 		L = fabs(MyMtVector3::Dot(Interval, NBe[i]));
 		if (L > rA + rB)return false;
 	}
@@ -464,7 +464,7 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 	Novice::DrawLine(int(points[0].x), int(points[0].y), int(points[3].x), int(points[3].y), color);
 	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[2].x), int(points[2].y), color);
 	Novice::DrawLine(int(points[1].x), int(points[1].y), int(points[3].x), int(points[3].y), color);
-	
+
 }
 void DrawTriangle(const Triangle& triangle, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 	Vector3 points[3];
@@ -490,7 +490,7 @@ void DrawAABB(const AABB& aabb, const Matrix4x4& viewProjectionMatrix, const Mat
 	for (int32_t index = 0; index < 8; ++index) {
 		points[index] = MyMtMatrix::Transform(MyMtMatrix::Transform(perpendiculars[index], viewProjectionMatrix), viewportMatrix);
 	}
-	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[1].x, (int)points[1].y,color);
+	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[1].x, (int)points[1].y, color);
 	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[2].x, (int)points[2].y, color);
 	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[2].x, (int)points[2].y, color);
 	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[1].x, (int)points[1].y, color);
@@ -521,11 +521,11 @@ void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix
 	perpendiculars[4] = { -obb.size.x,-obb.size.y,obb.size.z };
 	perpendiculars[5] = { obb.size.x,-obb.size.y,obb.size.z };
 	perpendiculars[6] = { -obb.size.x,obb.size.y,obb.size.z };
-	perpendiculars[7] = {obb.size.x,obb.size.y,obb.size.z};
+	perpendiculars[7] = { obb.size.x,obb.size.y,obb.size.z };
 
 	Vector3 points[8];
 	for (int32_t index = 0; index < 8; ++index) {
-		points[index] = MyMtMatrix::Transform(MyMtMatrix::Transform(perpendiculars[index],MyMtMatrix::Multiply(obbWorldMatrix,viewProjectionMatrix)), viewportMatrix);
+		points[index] = MyMtMatrix::Transform(MyMtMatrix::Transform(perpendiculars[index], MyMtMatrix::Multiply(obbWorldMatrix, viewProjectionMatrix)), viewportMatrix);
 	}
 	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[1].x, (int)points[1].y, color);
 	Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[2].x, (int)points[2].y, color);
@@ -547,8 +547,8 @@ void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, cons
 	for (size_t i = 0; i < segmentCount; i++) {
 		float t = 1.0f / segmentCount * i;
 		float t2 = t + 1.0f / segmentCount;
-		Vector3 p2 = MyMtVector3::Lerp(controlPoint0,controlPoint1,t),
-			p3 = MyMtVector3::Lerp(controlPoint1,controlPoint2,t);
+		Vector3 p2 = MyMtVector3::Lerp(controlPoint0, controlPoint1, t),
+			p3 = MyMtVector3::Lerp(controlPoint1, controlPoint2, t);
 		Vector3 pos[2];
 		pos[0] = MyMtVector3::CatmullRomInterpolation(controlPoint0, p2, p3, controlPoint2, t);
 		p2 = MyMtVector3::Lerp(controlPoint0, controlPoint1, t2);
@@ -556,7 +556,7 @@ void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, cons
 		pos[1] = MyMtVector3::CatmullRomInterpolation(controlPoint0, p2, p3, controlPoint2, t2);
 		Vector3 points[2];
 		for (int32_t index = 0; index < 2; ++index) {
-			points[index] = MyMtMatrix::Transform(MyMtMatrix::Transform(pos[index],viewProjectionMatrix), viewportMatrix);
+			points[index] = MyMtMatrix::Transform(MyMtMatrix::Transform(pos[index], viewProjectionMatrix), viewportMatrix);
 		}
 		Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[1].x, (int)points[1].y, color);
 	}
@@ -667,13 +667,30 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 						 {0.0f,0.0f,1.0f}},
 		.size{0.5f,0.37f,0.5f}
 	};*/
-	Vector3 controlPoints[4] = {
+	/*Vector3 controlPoints[4] = {
 		{-0.8f,0.58f,1.0f},
 		{1.76f,1.0f,-0.3f},
 		{0.94f,-0.7f,2.3f},
 		{-0.53f,-0.26f,-0.15f,}
+	};*/
+	Sphere sphere[3]{};
+	Vector3 translates[3] = {
+		{0.2f,1.0f,0.0f},
+		{0.4f,0.0f,0.0f},
+		{0.3f,0.0f,0.0f},
 	};
-	Sphere sphere[4]{};
+	Vector3 rotates[3] = {
+		{0.0f,0.0f,-6.8f},
+		{0.0f,0.0f,-1.4f},
+		{0.0f,0.0f,0.0f},
+	};
+	Vector3 scales[3] = {
+		{1.0f,1.0f,1.0f},
+		{1.0f,1.0f,1.0f},
+		{1.0f,1.0f,1.0f},
+	};
+	Matrix4x4 sphereWorldMatrix[3];
+	Matrix4x4 sphereWorldViewProjectionMatrix[3]{};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -709,18 +726,29 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		cameraTranslate = MyMtVector3::Add(cameraTranslate, cameraVelocity);
 
 		if (Novice::IsPressMouse(0) && keys[DIK_LSHIFT]) {
-			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, {MyMtVector3::Add(preMouse , mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0 }));
+			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Add(preMouse , mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0 }));
 			cameraTranslate = MyMtVector3::Add(cameraTranslate, MyMtMatrix::Transform(MyMtVector3::Divide(120.0f, MyMtVector3::Subtract(preMouse, mouse)), MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, { 0,0,0 })));
 			//cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0}));
 		}
 		if (keys[DIK_SPACE]) {
-			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0}));
+			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0 }));
 		}
 		cameraMatrix = MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cameraTranslate);
 		viewMatrix = MyMtMatrix::Inverse(cameraMatrix);
 		projectionMatrix = MyMtMatrix::MakePerspectiveFovMatrix(0.45f, float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		ViewProjectionMatrix = MyMtMatrix::Multiply(viewMatrix, projectionMatrix);
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
+
+		for (size_t i = 0; i < 3; i++) {
+			sphere[i] = { {0.0f,0.0f,0.0f},0.1f };
+			if (i == 0) {
+				sphereWorldMatrix[i] = MyMtMatrix::MakeAffineMatrix(scales[i], rotates[i], translates[i]);
+			}
+			else {
+				sphereWorldMatrix[i] = MyMtMatrix::Multiply(MyMtMatrix::MakeAffineMatrix(scales[i], rotates[i], translates[i]), sphereWorldMatrix[i - 1]);
+			}
+			sphereWorldViewProjectionMatrix[i] = MyMtMatrix::Multiply(sphereWorldMatrix[i], ViewProjectionMatrix);
+		}
 
 		//obb = MakeOBBRotate(obb, obbRotate);
 		//obb2 = MakeOBBRotate(obb2, obbRotate2);
@@ -781,9 +809,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("OBB2.Orientations[1]", &obb2.orientations[1].x, 0.01f);
 		ImGui::DragFloat3("OBB2.Orientations[2]", &obb2.orientations[2].x, 0.01f);
 		ImGui::DragFloat3("OBB2.Size", &obb2.size.x, 0.01f);*/
-		ImGui::DragFloat3("controlPoints[0]", &controlPoints[0].x, 0.01f);
+		/*ImGui::DragFloat3("controlPoints[0]", &controlPoints[0].x, 0.01f);
 		ImGui::DragFloat3("controlPoints[1]", &controlPoints[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoints[2]", &controlPoints[2].x, 0.01f);
+		ImGui::DragFloat3("controlPoints[2]", &controlPoints[2].x, 0.01f);*/
+		ImGui::DragFloat3("translates[0]", &translates[0].x, 0.01f);
+		ImGui::DragFloat3("translates[1]", &translates[1].x, 0.01f);
+		ImGui::DragFloat3("translates[2]", &translates[2].x, 0.01f);
+		ImGui::DragFloat3("rotates[0]", &rotates[0].x, 0.01f);
+		ImGui::DragFloat3("rotates[1]", &rotates[1].x, 0.01f);
+		ImGui::DragFloat3("rotates[2]", &rotates[2].x, 0.01f);
+		ImGui::DragFloat3("scales[0]", &scales[0].x, 0.01f);
+		ImGui::DragFloat3("scales[1]", &scales[1].x, 0.01f);
+		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);
 		ImGui::End();
 		/*preMouse = mouse;*/
 		///
@@ -794,9 +831,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(ViewProjectionMatrix, viewportMatrix);
-		for (size_t i = 0; i < 4;i++) {
-			sphere[i] = { controlPoints[i],0.01f};
-			DrawSphere(sphere[i], ViewProjectionMatrix, viewportMatrix, 0x000000ff);
+		for (size_t i = 0; i < 3; i++) {
+			if (i != 0) {
+				Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere[i - 1].center, sphereWorldViewProjectionMatrix[i - 1]), viewportMatrix);
+				Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere[i].center, sphereWorldViewProjectionMatrix[i]), viewportMatrix);
+				Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
+			}
+			DrawSphere(sphere[i], sphereWorldViewProjectionMatrix[i], viewportMatrix, 0x000000ff);
 		}
 		//DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
@@ -805,7 +846,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1Color);
 		/*DrawOBB(obb, ViewProjectionMatrix, viewportMatrix, obbColor);
 		DrawOBB(obb2, ViewProjectionMatrix, viewportMatrix, 0xffffffff);*/
-		DrawCotmullRom(controlPoints[0], controlPoints[1], controlPoints[2],controlPoints[3], ViewProjectionMatrix, viewportMatrix, 0x0000ffff);
+		//DrawCotmullRom(controlPoints[0], controlPoints[1], controlPoints[2],controlPoints[3], ViewProjectionMatrix, viewportMatrix, 0x0000ffff);
 		///
 		/// ↑描画処理ここまで
 		///
