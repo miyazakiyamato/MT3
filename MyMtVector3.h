@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Vector3.h"
 struct Line {
 	Vector3 origin;
@@ -41,9 +41,9 @@ public:
 	static Vector3 CatmullRomInterpolation(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Vector3& p3, const float& t);
 	
 };
-//Vector3 operator+(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Add(v1, v2); }
-//Vector3 operator-(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Subtract(v1, v2); }
-//Vector3 operator*(const float& v1, const Vector3& v2) { return MyMtVector3::Multiply(v1, v2); }
-//Vector3 operator*(const Vector3& v1, const float& v2) { return v2 * v1; }
-//Vector3 operator/(const float& v1, const Vector3& v2) { return MyMtVector3::Divide(v1, v2); }
-//Vector3 operator/(const Vector3& v1, const float& v2) { return v2 / v1; }
+Vector3 operator+(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Add(v1, v2); }
+Vector3 operator-(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Subtract(v1, v2); }
+Vector3 operator*(float v1, const Vector3& v2) { return MyMtVector3::Multiply(v1, v2); }
+Vector3 operator*(const Vector3& v1,float v2) { return v2 * v1; }
+Vector3 operator/(float v1, const Vector3& v2) { return MyMtVector3::Divide(v1, v2); }
+Vector3 operator/(const Vector3& v1,float v2) { return v2 / v1; }
