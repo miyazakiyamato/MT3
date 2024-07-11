@@ -561,7 +561,34 @@ void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, cons
 		Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[1].x, (int)points[1].y, color);
 	}
 }
-
+void DrawCotmullRom(const Vector3& controlPoint0, const Vector3& controlPoint1, const Vector3& controlPoint2, const Vector3& controlPoint3, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	const size_t segmentCount = 100;
+	for (size_t j = 0; j < 3; j++) {
+		Vector3 controlPoint[4] = { controlPoint0, controlPoint1, controlPoint2, controlPoint3 };
+		if (j == 0) {
+			controlPoint[1] = controlPoint0;
+			controlPoint[2] = controlPoint1;
+			controlPoint[3] = controlPoint2;
+		}
+		if (j == 2) {
+			controlPoint[0] = controlPoint1;
+			controlPoint[1] = controlPoint2;
+			controlPoint[2] = controlPoint3;
+		}
+		for (size_t i = 0; i < segmentCount; i++) {
+			float t = 1.0f / segmentCount * i;
+			float t2 = t + 1.0f / segmentCount;
+			Vector3 pos[2];
+			pos[0] = MyMtVector3::CatmullRomInterpolation(controlPoint[0], controlPoint[1], controlPoint[2], controlPoint[3], t);
+			pos[1] = MyMtVector3::CatmullRomInterpolation(controlPoint[0], controlPoint[1], controlPoint[2], controlPoint[3], t2);
+			Vector3 points[2];
+			for (int32_t index = 0; index < 2; ++index) {
+				points[index] = MyMtMatrix::Transform(MyMtMatrix::Transform(pos[index], viewProjectionMatrix), viewportMatrix);
+			}
+			Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[1].x, (int)points[1].y, color);
+		}
+	}
+}
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
@@ -640,23 +667,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 						 {0.0f,0.0f,1.0f}},
 		.size{0.5f,0.37f,0.5f}
 	};*/
-	Vector3 controlPoints[3] = {
+	Vector3 controlPoints[4] = {
 		{-0.8f,0.58f,1.0f},
 		{1.76f,1.0f,-0.3f},
 		{0.94f,-0.7f,2.3f},
+		{-0.53f,-0.26f,-0.15f,}
 	};
-	Sphere sphere1{
-		{0.0f,0.0f,0.0f},
-		0.01f
-	};
-	Sphere sphere2{
-		{0.0f,0.0f,0.0f},
-		0.01f
-	};
-	Sphere sphere3{
-		{0.0f,0.0f,0.0f},
-		0.01f
-	};
+	Sphere sphere[4]{};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -705,9 +722,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ViewProjectionMatrix = MyMtMatrix::Multiply(viewMatrix, projectionMatrix);
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
-		sphere1.center = controlPoints[0];
-		sphere2.center = controlPoints[1];
-		sphere3.center = controlPoints[2];
 		//obb = MakeOBBRotate(obb, obbRotate);
 		//obb2 = MakeOBBRotate(obb2, obbRotate2);
 		/*sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
@@ -722,8 +736,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff),ViewProjectionMatrix), viewportMatrix);*/
 
 		ImGui::Begin("Window");
-		/*ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
-		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);*/
+		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
+		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
 
 		/*ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
 		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);*/
@@ -780,16 +794,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(ViewProjectionMatrix, viewportMatrix);
-		DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
-		DrawSphere(sphere2, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
-		DrawSphere(sphere3, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
+		for (size_t i = 0; i < 4;i++) {
+			sphere[i] = { controlPoints[i],0.01f};
+			DrawSphere(sphere[i], ViewProjectionMatrix, viewportMatrix, 0x000000ff);
+		}
+		//DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
 		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1Color);
 		/*DrawOBB(obb, ViewProjectionMatrix, viewportMatrix, obbColor);
 		DrawOBB(obb2, ViewProjectionMatrix, viewportMatrix, 0xffffffff);*/
-		DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2], ViewProjectionMatrix,viewportMatrix,0x0000ffff);
+		DrawCotmullRom(controlPoints[0], controlPoints[1], controlPoints[2],controlPoints[3], ViewProjectionMatrix, viewportMatrix, 0x0000ffff);
 		///
 		/// ↑描画処理ここまで
 		///
