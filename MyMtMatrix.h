@@ -1,5 +1,5 @@
-#pragma once
-#include "Vector3.h"
+﻿#pragma once
+#include "MyMtVector3.h"
 #include "Matrix4x4.h"
 
 class MyMtMatrix
@@ -26,4 +26,6 @@ public:
 	static Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height, float minDepth, float maxDepth);
 
 };
-
+Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Add(m1, m2); }
+Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Subtract(m1, m2); }
+Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Multiply(m1, m2); }
