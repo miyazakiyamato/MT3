@@ -588,6 +588,16 @@ const char kWindowTitle[] = "LD2B_07_ミヤザキ_ヤマト";
 //		}
 //	}
 //}
+Vector3 operator+(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Add(v1, v2); }
+Vector3 operator-(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Subtract(v1, v2); }
+Vector3 operator*(float v1, const Vector3& v2) { return MyMtVector3::Multiply(v1, v2); }
+Vector3 operator*(const Vector3& v1, float v2) { return v2 * v1; }
+Vector3 operator/(float v1, const Vector3& v2) { return MyMtVector3::Divide(v1, v2); }
+Vector3 operator/(const Vector3& v1, float v2) { return v2 / v1; }
+Vector3 operator-(const Vector3& v) { return { -v.x,-v.y,-v.z }; }
+Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Add(m1, m2); }
+Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Subtract(m1, m2); }
+Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Multiply(m1, m2); }
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
