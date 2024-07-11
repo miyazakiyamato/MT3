@@ -4,6 +4,9 @@
 #include <cmath>
 #include "MyMtVector3.h"
 #include "MyMtMatrix.h"
+//#include "Vector3.h"
+//#include "Matrix4x4.h"
+
 #include "imgui.h"
 #include <algorithm>
 
@@ -539,6 +542,27 @@ void DrawOBB(const OBB& obb, const Matrix4x4& viewProjectionMatrix, const Matrix
 	Novice::DrawLine((int)points[2].x, (int)points[2].y, (int)points[6].x, (int)points[6].y, color);
 	Novice::DrawLine((int)points[3].x, (int)points[3].y, (int)points[7].x, (int)points[7].y, color);
 }
+void DrawBezier(const Vector3& controlPoint0, const Vector3& controlPoint1, const Vector3& controlPoint2, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
+	const size_t segmentCount = 100;
+	for (size_t i = 0; i < segmentCount; i++) {
+		float t = 1.0f / segmentCount * i;
+		float t2 = t + 1.0f / segmentCount;
+		Vector3 p2 = MyMtVector3::Lerp(controlPoint0,controlPoint1,t),
+			p3 = MyMtVector3::Lerp(controlPoint1,controlPoint2,t);
+		Vector3 pos[2];
+		pos[0] = MyMtVector3::CatmullRomInterpolation(controlPoint0, p2, p3, controlPoint2, t);
+		p2 = MyMtVector3::Lerp(controlPoint0, controlPoint1, t2);
+		p3 = MyMtVector3::Lerp(controlPoint1, controlPoint2, t2);
+		pos[1] = MyMtVector3::CatmullRomInterpolation(controlPoint0, p2, p3, controlPoint2, t2);
+		Vector3 points[2];
+		for (int32_t index = 0; index < 2; ++index) {
+			points[index] = MyMtMatrix::Transform(MyMtMatrix::Transform(pos[index],viewProjectionMatrix), viewportMatrix);
+		}
+		Novice::DrawLine((int)points[0].x, (int)points[0].y, (int)points[1].x, (int)points[1].y, color);
+	}
+}
+
+
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -598,7 +622,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		.max{0.5f,0.5f,0.5f},
 	};
 	unsigned int aabb1Color = 0xffffffff;*/
-	Vector3 obbRotate{ 0.0f,0.0f,0.0f };
+	/*Vector3 obbRotate{ 0.0f,0.0f,0.0f };
 	Matrix4x4 obbRotateMatrix{};
 	OBB obb{
 		.center{0.0f,0.0f,0.0f},
@@ -615,6 +639,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 						 {0.0f,1.0f,0.0f},
 						 {0.0f,0.0f,1.0f}},
 		.size{0.5f,0.37f,0.5f}
+	};*/
+	Vector3 controlPoints[3] = {
+		{-0.8f,0.58f,1.0f},
+		{1.76f,1.0f,-0.3f},
+		{0.94f,-0.7f,2.3f},
+	};
+	Sphere sphere1{
+		{0.0f,0.0f,0.0f},
+		0.01f
+	};
+	Sphere sphere2{
+		{0.0f,0.0f,0.0f},
+		0.01f
+	};
+	Sphere sphere3{
+		{0.0f,0.0f,0.0f},
+		0.01f
 	};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -651,7 +692,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		cameraTranslate = MyMtVector3::Add(cameraTranslate, cameraVelocity);
 
 		if (Novice::IsPressMouse(0) && keys[DIK_LSHIFT]) {
-			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0 }));
+			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, {MyMtVector3::Add(preMouse , mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0 }));
 			cameraTranslate = MyMtVector3::Add(cameraTranslate, MyMtMatrix::Transform(MyMtVector3::Divide(120.0f, MyMtVector3::Subtract(preMouse, mouse)), MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, { 0,0,0 })));
 			//cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0}));
 		}
@@ -664,22 +705,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ViewProjectionMatrix = MyMtMatrix::Multiply(viewMatrix, projectionMatrix);
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 
-		obb = MakeOBBRotate(obb, obbRotate);
-		obb2 = MakeOBBRotate(obb2, obbRotate2);
+		sphere1.center = controlPoints[0];
+		sphere2.center = controlPoints[1];
+		sphere3.center = controlPoints[2];
+		//obb = MakeOBBRotate(obb, obbRotate);
+		//obb2 = MakeOBBRotate(obb2, obbRotate2);
 		/*sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
 		segmentColor = IsCollision(segment, plane) == true ? 0xff0000ff : 0xffffffff;*/
 		/*segmentColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;*/
 		//aabb1Color = IsCollision(aabb1,sphere1) == true ? 0xff0000ff : 0xffffffff;
 		//aabb1Color = IsCollision(aabb1, segment) == true ? 0xff0000ff : 0xffffffff;
 		//obbColor = IsCollision(obb,sphere1) == true ? 0xff0000ff : 0xffffffff;
-		obbColor = IsCollision(obb,obb2) == true ? 0xff0000ff : 0xffffffff;
+		/*obbColor = IsCollision(obb,obb2) == true ? 0xff0000ff : 0xffffffff;*/
 
 		/*screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin,ViewProjectionMatrix), viewportMatrix);
 		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff),ViewProjectionMatrix), viewportMatrix);*/
 
 		ImGui::Begin("Window");
-		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
-		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
+		/*ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
+		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);*/
 
 		/*ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
 		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);*/
@@ -704,7 +748,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
 		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);*/
 
-		ImGui::DragFloat("OBB.Rotate.x", &obbRotate.x, 0.01f);
+		/*ImGui::DragFloat("OBB.Rotate.x", &obbRotate.x, 0.01f);
 		ImGui::DragFloat("OBB.Rotate.y", &obbRotate.y, 0.01f);
 		ImGui::DragFloat("OBB.Rotate.z", &obbRotate.z, 0.01f);
 
@@ -722,9 +766,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("OBB2.Orientations[0]", &obb2.orientations[0].x, 0.01f);
 		ImGui::DragFloat3("OBB2.Orientations[1]", &obb2.orientations[1].x, 0.01f);
 		ImGui::DragFloat3("OBB2.Orientations[2]", &obb2.orientations[2].x, 0.01f);
-		ImGui::DragFloat3("OBB2.Size", &obb2.size.x, 0.01f);
+		ImGui::DragFloat3("OBB2.Size", &obb2.size.x, 0.01f);*/
+		ImGui::DragFloat3("controlPoints[0]", &controlPoints[0].x, 0.01f);
+		ImGui::DragFloat3("controlPoints[1]", &controlPoints[1].x, 0.01f);
+		ImGui::DragFloat3("controlPoints[2]", &controlPoints[2].x, 0.01f);
 		ImGui::End();
-		preMouse = mouse;
+		/*preMouse = mouse;*/
 		///
 		/// ↑更新処理ここまで
 		///
@@ -733,13 +780,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓描画処理ここから
 		///
 		DrawGrid(ViewProjectionMatrix, viewportMatrix);
-		//DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
+		DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
+		DrawSphere(sphere2, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
+		DrawSphere(sphere3, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
 		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1Color);
-		DrawOBB(obb, ViewProjectionMatrix, viewportMatrix, obbColor);
-		DrawOBB(obb2, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
+		/*DrawOBB(obb, ViewProjectionMatrix, viewportMatrix, obbColor);
+		DrawOBB(obb2, ViewProjectionMatrix, viewportMatrix, 0xffffffff);*/
+		DrawBezier(controlPoints[0], controlPoints[1], controlPoints[2], ViewProjectionMatrix,viewportMatrix,0x0000ffff);
 		///
 		/// ↑描画処理ここまで
 		///

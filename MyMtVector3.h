@@ -37,5 +37,13 @@ public:
 	static Vector3 ClosestPoint(const Vector3& point, const Line& line);
 	static Vector3 ClosestPoint(const Vector3& point, const Ray& ray);
 	static Vector3 ClosestPoint(const Vector3& point, const Segment& segment);
+	static Vector3 Lerp(const Vector3& v1, const Vector3& v2, float t);
+	static Vector3 CatmullRomInterpolation(const Vector3& p0, const Vector3& p1, const Vector3& p2, const Vector3& p3, const float& t);
+	
 };
-
+//Vector3 operator+(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Add(v1, v2); }
+//Vector3 operator-(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Subtract(v1, v2); }
+//Vector3 operator*(const float& v1, const Vector3& v2) { return MyMtVector3::Multiply(v1, v2); }
+//Vector3 operator*(const Vector3& v1, const float& v2) { return v2 * v1; }
+//Vector3 operator/(const float& v1, const Vector3& v2) { return MyMtVector3::Divide(v1, v2); }
+//Vector3 operator/(const Vector3& v1, const float& v2) { return v2 / v1; }
