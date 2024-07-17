@@ -639,6 +639,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 ViewProjectionMatrix{};
 	Matrix4x4 viewportMatrix{};
 
+	Matrix4x4 screenMatrix{
+		1,0,0,0,
+		0,-1,0,0,
+		0,0,1,0,
+		0,0,0,1
+	};
 
 	int mouseX = 0;
 	int mouseY = 0;
@@ -718,19 +724,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 sphereWorldViewProjectionMatrix[3]{};*/
 
 	Spring spring{};
-	spring.anchor = { 0.0f,0.0f,0.0f };
-	spring.naturalLength = 1.0f;
+	spring.anchor = { 0.0f,1.0f,0.0f };
+	spring.naturalLength = 0.7f;
 	spring.stiffness = 100.f;
 	spring.dampingCoefficient = 2.0f;
 
 	Ball ball{};
-	ball.position = { 1.2f,0.0f,0.0f };
+	ball.position = { 0.8f,0.2f,0.0f };
 	ball.mass = 2.0f;
 	ball.radius = 0.05f;
 	ball.color = BLUE;
 	
 	float deltaTime = 1.0f / 60.0f;
 
+	const Vector3 kGravity{ 0.0f,-9.8f,0.0f };
 	Vector3 diff;
 	float length;
 	bool isStart = false;
@@ -782,7 +789,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		projectionMatrix = MyMtMatrix::MakePerspectiveFovMatrix(0.45f, float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
 		ViewProjectionMatrix = MyMtMatrix::Multiply(viewMatrix, projectionMatrix);
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
-
 		
 		if (isStart) {
 			diff = ball.position - spring.anchor;
@@ -797,8 +803,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				force = restoringForce + dampingForce;
 				ball.cceleration = force / ball.mass;
 			}
-
-			ball.velocity = ball.velocity + ball.cceleration * deltaTime;
+			ball.velocity = ball.velocity + ball.cceleration * deltaTime + kGravity * deltaTime;
 			ball.position = ball.position + ball.velocity * deltaTime;
 		}
 		sphere1.center = ball.position;
@@ -914,7 +919,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			DrawSphere(sphere[i], sphereWorldViewProjectionMatrix[i], viewportMatrix, 0x000000ff);
 		}*/
 		//DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
-		Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform({0,0,0}, ViewProjectionMatrix), viewportMatrix);
+		Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(spring.anchor, ViewProjectionMatrix), viewportMatrix);
 		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);
 		Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
 		DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, ball.color);
