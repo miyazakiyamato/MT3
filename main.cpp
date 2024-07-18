@@ -657,7 +657,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	Sphere sphere1{
 		{0.0f,0.0f,0.0f},
-		0.5f
+		0.05f
 	};
 	//uint32_t sphereColor1 = 0xffffffff;
 	/*Segment segment{
@@ -723,7 +723,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Matrix4x4 sphereWorldMatrix[3];
 	Matrix4x4 sphereWorldViewProjectionMatrix[3]{};*/
 
-	Spring spring{};
+	/*Spring spring{};
 	spring.anchor = { 0.0f,1.0f,0.0f };
 	spring.naturalLength = 0.7f;
 	spring.stiffness = 100.f;
@@ -733,13 +733,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	ball.position = { 0.8f,0.2f,0.0f };
 	ball.mass = 2.0f;
 	ball.radius = 0.05f;
-	ball.color = BLUE;
+	ball.color = BLUE;*/
 	
 	float deltaTime = 1.0f / 60.0f;
 
-	const Vector3 kGravity{ 0.0f,-9.8f,0.0f };
+	/*const Vector3 kGravity{ 0.0f,-9.8f,0.0f };
 	Vector3 diff;
-	float length;
+	float length;*/
+	
+	float angularVelocity = 3.14f;
+	float angle = 0.0f;
+	float radius = 0.8f;
+	Vector3 position{radius,0,0};
+	Vector3 center{};
+	
+	//Vector3 radius{};
+	Vector3 acceleration{};
+	Vector3 velocity{};
+	
 	bool isStart = false;
 	ImVec2 button = {100,20};
 	// ウィンドウの×ボタンが押されるまでループ
@@ -791,7 +802,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
 		if (isStart) {
-			diff = ball.position - spring.anchor;
+			/*diff = ball.position - spring.anchor;
 			length = MyMtVector3::Length(diff);
 			if (length != 0.0f) {
 				Vector3 direction = MyMtVector3::Normalize(diff);
@@ -804,10 +815,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 				ball.cceleration = force / ball.mass;
 			}
 			ball.velocity = ball.velocity + ball.cceleration * deltaTime + kGravity * deltaTime;
-			ball.position = ball.position + ball.velocity * deltaTime;
+			ball.position = ball.position + ball.velocity * deltaTime;*/
+			float womega = angularVelocity * deltaTime;
+			angle += womega;
+			velocity = Vector3(-radius * womega * std::sinf(angle), radius * womega * std::cosf(angle), 0);
+			acceleration = -powf(womega, 2) * (position - center);
+			position = position + velocity + acceleration;
 		}
-		sphere1.center = ball.position;
-		sphere1.radius = ball.radius;
+		/*sphere1.center = ball.position;
+		sphere1.radius = ball.radius;*/
+		
+		sphere1.center = position + center;
+
 		//for (size_t i = 0; i < 3; i++) {
 		//	sphere[i] = { {0.0f,0.0f,0.0f},0.1f };
 		//	if (i == 0) {
@@ -893,13 +912,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("scales[0]", &scales[0].x, 0.01f);
 		ImGui::DragFloat3("scales[1]", &scales[1].x, 0.01f);
 		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);*/
-		ImGui::DragFloat3("spring.anchor", &spring.anchor.x, 0.01f);
+		/*ImGui::DragFloat3("spring.anchor", &spring.anchor.x, 0.01f);
 		ImGui::DragFloat("spring.naturalLength", &spring.naturalLength, 0.01f);
 		ImGui::DragFloat("spring.stiffness", &spring.stiffness, 0.01f);
 		ImGui::DragFloat3("ball.position", &ball.position.x, 0.01f);
 		ImGui::DragFloat("ball.mass", &ball.mass, 0.01f);
-		ImGui::DragFloat("ball.radius", &ball.radius, 0.01f);
-
+		ImGui::DragFloat("ball.radius", &ball.radius, 0.01f);*/
+		ImGui::DragFloat3("position", &position.x, 0.01f);
+		ImGui::DragFloat3("velocity", &velocity.x, 0.01f);
+		ImGui::DragFloat3("acceleration", &acceleration.x, 0.01f);
+		
 		ImGui::End();
 		/*preMouse = mouse;*/
 		///
@@ -919,10 +941,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			DrawSphere(sphere[i], sphereWorldViewProjectionMatrix[i], viewportMatrix, 0x000000ff);
 		}*/
 		//DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
-		Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(spring.anchor, ViewProjectionMatrix), viewportMatrix);
-		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);
-		Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
-		DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, ball.color);
+		/*Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(spring.anchor, ViewProjectionMatrix), viewportMatrix);
+		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);*/
+		//Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
+		DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
