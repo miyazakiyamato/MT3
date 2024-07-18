@@ -47,6 +47,14 @@ struct Ball
 	float radius;//半径
 	unsigned int color;//色
 };
+struct Pendulum
+{
+	Vector3 anchor;//アンカーポイント固定された位置
+	float length;//紐の長さ
+	float angle;//現在の角度
+	float angularVelocity;//角速度
+	float angularAcceleration;//角加速度
+};
 //クロス積
 Vector3 Cross(const Vector3& v1, const Vector3& v2) {
 	Vector3 ab{ v1.y * v2.z - v1.z * v2.y,v1.z * v2.x - v1.x * v2.z,v1.x * v2.y - v1.y * v2.x };
@@ -741,16 +749,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	Vector3 diff;
 	float length;*/
 	
-	float angularVelocity = 3.14f;
-	float angle = 0.0f;
-	float radius = 0.8f;
-	Vector3 position{radius,0,0};
-	Vector3 center{};
+	//float angularVelocity = 3.14f;
+	//float angle = 0.0f;
+	//float radius = 0.8f;
+	Vector3 position{ 0.0f,1.0f,0.0f };
+	//Vector3 center{};
+	//
+	//Vector3 acceleration{};
+	//Vector3 velocity{};
 	
-	//Vector3 radius{};
-	Vector3 acceleration{};
-	Vector3 velocity{};
-	
+	Pendulum pendulum;
+	pendulum.anchor = { 0.0f,1.0f,0.0f };
+	pendulum.length = 0.8f;
+	pendulum.angle = 0.7f;
+	pendulum.angularVelocity = 0.0f;
+	pendulum.angularAcceleration = 0.0f;
+
 	bool isStart = false;
 	ImVec2 button = {100,20};
 	// ウィンドウの×ボタンが押されるまでループ
@@ -816,16 +830,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			}
 			ball.velocity = ball.velocity + ball.cceleration * deltaTime + kGravity * deltaTime;
 			ball.position = ball.position + ball.velocity * deltaTime;*/
-			float womega = angularVelocity * deltaTime;
+			/*float womega = angularVelocity * deltaTime;
 			angle += womega;
 			velocity = Vector3(-radius * womega * std::sinf(angle), radius * womega * std::cosf(angle), 0);
 			acceleration = -powf(womega, 2) * (position - center);
-			position = position + velocity + acceleration;
+			position = position + velocity + acceleration;*/
+
+			pendulum.angularAcceleration = -(9.8f / pendulum.length) * std::sinf(pendulum.angle);
+			pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
+			pendulum.angle += pendulum.angularVelocity * deltaTime;
 		}
 		/*sphere1.center = ball.position;
 		sphere1.radius = ball.radius;*/
 		
-		sphere1.center = position + center;
+		//sphere1.center = position + center;
+		position.x = pendulum.anchor.x + std::sinf(pendulum.angle) * pendulum.length;
+		position.y = pendulum.anchor.y - std::cosf(pendulum.angle) * pendulum.length;
+		position.z = pendulum.anchor.z;
+		sphere1.center = position;
 
 		//for (size_t i = 0; i < 3; i++) {
 		//	sphere[i] = { {0.0f,0.0f,0.0f},0.1f };
@@ -919,8 +941,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat("ball.mass", &ball.mass, 0.01f);
 		ImGui::DragFloat("ball.radius", &ball.radius, 0.01f);*/
 		ImGui::DragFloat3("position", &position.x, 0.01f);
-		ImGui::DragFloat3("velocity", &velocity.x, 0.01f);
-		ImGui::DragFloat3("acceleration", &acceleration.x, 0.01f);
+		/*ImGui::DragFloat3("velocity", &velocity.x, 0.01f);
+		ImGui::DragFloat3("acceleration", &acceleration.x, 0.01f);*/
 		
 		ImGui::End();
 		/*preMouse = mouse;*/
@@ -944,6 +966,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/*Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(spring.anchor, ViewProjectionMatrix), viewportMatrix);
 		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);*/
 		//Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
+		Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(pendulum.anchor, ViewProjectionMatrix), viewportMatrix);
+		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);
+		Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
 		DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
 		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
 		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
