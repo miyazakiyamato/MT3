@@ -55,6 +55,14 @@ struct Pendulum
 	float angularVelocity;//角速度
 	float angularAcceleration;//角加速度
 };
+struct ConicalPendulum
+{
+	Vector3 anchor;//アンカーポイント固定された位置
+	float length;//紐の長さ
+	float halApexAngle;//円錐の頂点の半分
+	float angle;//現在の角度
+	float angularVelocity;//角速度
+};
 //クロス積
 Vector3 Cross(const Vector3& v1, const Vector3& v2) {
 	Vector3 ab{ v1.y * v2.z - v1.z * v2.y,v1.z * v2.x - v1.x * v2.z,v1.x * v2.y - v1.y * v2.x };
@@ -758,12 +766,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//Vector3 acceleration{};
 	//Vector3 velocity{};
 	
-	Pendulum pendulum;
+	/*Pendulum pendulum;
 	pendulum.anchor = { 0.0f,1.0f,0.0f };
 	pendulum.length = 0.8f;
 	pendulum.angle = 0.7f;
 	pendulum.angularVelocity = 0.0f;
-	pendulum.angularAcceleration = 0.0f;
+	pendulum.angularAcceleration = 0.0f;*/
+
+	ConicalPendulum conicalPendulum;
+	conicalPendulum.anchor = { 0.0f,1.0f,0.0f };
+	conicalPendulum.length = 0.8f;
+	conicalPendulum.halApexAngle = 0.7f;
+	conicalPendulum.angle = 0.0f;
+	conicalPendulum.angularVelocity = 0.0f;
 
 	bool isStart = false;
 	ImVec2 button = {100,20};
@@ -836,17 +851,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			acceleration = -powf(womega, 2) * (position - center);
 			position = position + velocity + acceleration;*/
 
-			pendulum.angularAcceleration = -(9.8f / pendulum.length) * std::sinf(pendulum.angle);
-			pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
-			pendulum.angle += pendulum.angularVelocity * deltaTime;
+			conicalPendulum.angularVelocity = std::sqrtf(9.8f / (conicalPendulum.length * std::cosf(conicalPendulum.halApexAngle)));
+			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;
 		}
 		/*sphere1.center = ball.position;
 		sphere1.radius = ball.radius;*/
 		
 		//sphere1.center = position + center;
-		position.x = pendulum.anchor.x + std::sinf(pendulum.angle) * pendulum.length;
-		position.y = pendulum.anchor.y - std::cosf(pendulum.angle) * pendulum.length;
-		position.z = pendulum.anchor.z;
+		float radius = std::sinf(conicalPendulum.halApexAngle) * conicalPendulum.length;
+		float height = std::cosf(conicalPendulum.halApexAngle) * conicalPendulum.length;
+		position.x = conicalPendulum.anchor.x + std::cosf(conicalPendulum.angle) * radius;
+		position.y = conicalPendulum.anchor.y - height;
+		position.z = conicalPendulum.anchor.z - std::sinf(conicalPendulum.angle) * radius;
 		sphere1.center = position;
 
 		//for (size_t i = 0; i < 3; i++) {
@@ -966,7 +982,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/*Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(spring.anchor, ViewProjectionMatrix), viewportMatrix);
 		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);*/
 		//Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
-		Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(pendulum.anchor, ViewProjectionMatrix), viewportMatrix);
+		Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(conicalPendulum.anchor, ViewProjectionMatrix), viewportMatrix);
 		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);
 		Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
 		DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
