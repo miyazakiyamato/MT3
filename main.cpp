@@ -73,6 +73,13 @@ struct ConicalPendulum
 	float angle;//現在の角度
 	float angularVelocity;//角速度
 };
+struct Capsule
+{
+	Vector3 origin;
+	Vector3 diff;
+	float radius;
+};
+
 //クロス積
 Vector3 Cross(const Vector3& v1, const Vector3& v2) {
 	Vector3 ab{ v1.y * v2.z - v1.z * v2.y,v1.z * v2.x - v1.x * v2.z,v1.x * v2.y - v1.y * v2.x };
@@ -146,6 +153,17 @@ bool IsCollision(const Segment& segment, const Plane& plane) {
 	}
 	float t = (plane.distance - MyMtVector3::Dot(segment.origin, plane.normal)) / dot;
 	if (t >= 0.0f && t <= 1.0f) {
+		return true;
+	}
+	return false;
+}
+bool IsCollision(const Capsule& capsule, const Plane& plane) {
+	float dot = MyMtVector3::Dot(plane.normal, capsule.diff);
+	if (dot == 0.0f) {
+		return false;
+	}
+	float t = (plane.distance - MyMtVector3::Dot(capsule.origin, plane.normal)) / dot;
+	if (t >= -capsule.radius && t <= 1.0f + capsule.radius) {
 		return true;
 	}
 	return false;
@@ -758,6 +776,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	plane.normal = MyMtVector3::Normalize({ -0.2f,0.9f,-0.3f });
 	plane.distance = 0.0f;
 
+	Capsule capsule{};
+	capsule.radius = ball.radius;
 
 	float deltaTime = 1.0f / 60.0f;
 
@@ -862,10 +882,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			/*conicalPendulum.angularVelocity = std::sqrtf(9.8f / (conicalPendulum.length * std::cosf(conicalPendulum.halApexAngle)));
 			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;*/
 			ball.velocity = ball.velocity + ball.acceleration * deltaTime;
+			capsule.origin = ball.position;
+			capsule.diff = ball.velocity * deltaTime;
 			ball.position = ball.position + ball.velocity * deltaTime;
 		}
 
-		if (IsCollision(Sphere{ ball.position,ball.radius }, plane)) {
+		/*if (IsCollision(Sphere{ ball.position,ball.radius }, plane)) {
+			Vector3 reflected = Reflect(ball.velocity, plane.normal);
+			Vector3 projectToNormal = MyMtVector3::Project(reflected, plane.normal);
+			Vector3 movingDirection = reflected - projectToNormal;
+			ball.velocity = projectToNormal * 0.6f + movingDirection;
+		}*/
+		if (IsCollision(capsule, plane)) {
+			ball.position = capsule.origin;
 			Vector3 reflected = Reflect(ball.velocity, plane.normal);
 			Vector3 projectToNormal = MyMtVector3::Project(reflected, plane.normal);
 			Vector3 movingDirection = reflected - projectToNormal;
