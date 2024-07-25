@@ -10,6 +10,16 @@
 const char kWindowTitle[] = "LD2B_07_ミヤザキ_ヤマト";
 
 
+Vector3 operator+(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Add(v1, v2); }
+Vector3 operator-(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Subtract(v1, v2); }
+Vector3 operator*(float v1, const Vector3& v2) { return MyMtVector3::Multiply(v1, v2); }
+Vector3 operator*(const Vector3& v1, float v2) { return v2 * v1; }
+Vector3 operator/(float v1, const Vector3& v2) { return MyMtVector3::Divide(v1, v2); }
+Vector3 operator/(const Vector3& v1, float v2) { return v2 / v1; }
+Vector3 operator-(const Vector3& v) { return { -v.x,-v.y,-v.z }; }
+Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Add(m1, m2); }
+Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Subtract(m1, m2); }
+Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Multiply(m1, m2); }
 
 struct Sphere
 {
@@ -42,7 +52,7 @@ struct Ball
 {
 	Vector3 position;//位置
 	Vector3 velocity;//速度
-	Vector3 cceleration;//加速度
+	Vector3 acceleration;//加速度
 	float mass;//質量
 	float radius;//半径
 	unsigned int color;//色
@@ -90,6 +100,9 @@ OBB MakeOBBRotate(const OBB& obb, const Vector3& rotate) {
 		obbRotateMatrix.m[2][1],
 		obbRotateMatrix.m[2][2] };
 	return obb2;
+}
+Vector3 Reflect(const Vector3& input, const Vector3& normal) {
+	return input - (2.0f * MyMtVector3::Dot(input , normal)) * normal;
 }
 
 bool IsCollision(const Sphere& s1, const Sphere& s2) {
@@ -620,17 +633,6 @@ void DrawCotmullRom(const Vector3& controlPoint0, const Vector3& controlPoint1, 
 		}
 	}
 }
-Vector3 operator+(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Add(v1, v2); }
-Vector3 operator-(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Subtract(v1, v2); }
-Vector3 operator*(float v1, const Vector3& v2) { return MyMtVector3::Multiply(v1, v2); }
-Vector3 operator*(const Vector3& v1, float v2) { return v2 * v1; }
-Vector3 operator/(float v1, const Vector3& v2) { return MyMtVector3::Divide(v1, v2); }
-Vector3 operator/(const Vector3& v1, float v2) { return v2 / v1; }
-Vector3 operator-(const Vector3& v) { return { -v.x,-v.y,-v.z }; }
-Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Add(m1, m2); }
-Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Subtract(m1, m2); }
-Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Multiply(m1, m2); }
-
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
@@ -671,10 +673,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	float kCameraSpeed = 0.03f;
 	Vector3 cameraVelocity{};
 
-	Sphere sphere1{
+	/*Sphere sphere1{
 		{0.0f,0.0f,0.0f},
 		0.05f
-	};
+	};*/
 	//uint32_t sphereColor1 = 0xffffffff;
 	/*Segment segment{
 		.origin{-0.8f,-0.3f,0.0f},
@@ -743,14 +745,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	spring.anchor = { 0.0f,1.0f,0.0f };
 	spring.naturalLength = 0.7f;
 	spring.stiffness = 100.f;
-	spring.dampingCoefficient = 2.0f;
+	spring.dampingCoefficient = 2.0f;*/
 
 	Ball ball{};
-	ball.position = { 0.8f,0.2f,0.0f };
+	ball.position = { 0.8f,1.2f,0.3f };
+	ball.acceleration = { 0.0f,-9.8f,0.0f };
 	ball.mass = 2.0f;
 	ball.radius = 0.05f;
-	ball.color = BLUE;*/
+	ball.color = WHITE;
 	
+	Plane plane{};
+	plane.normal = MyMtVector3::Normalize({ -0.2f,0.9f,-0.3f });
+	plane.distance = 0.0f;
+
+
 	float deltaTime = 1.0f / 60.0f;
 
 	/*const Vector3 kGravity{ 0.0f,-9.8f,0.0f };
@@ -760,7 +768,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	//float angularVelocity = 3.14f;
 	//float angle = 0.0f;
 	//float radius = 0.8f;
-	Vector3 position{ 0.0f,1.0f,0.0f };
+	//Vector3 position{ 0.0f,1.0f,0.0f };
 	//Vector3 center{};
 	//
 	//Vector3 acceleration{};
@@ -773,12 +781,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	pendulum.angularVelocity = 0.0f;
 	pendulum.angularAcceleration = 0.0f;*/
 
-	ConicalPendulum conicalPendulum;
+	/*ConicalPendulum conicalPendulum;
 	conicalPendulum.anchor = { 0.0f,1.0f,0.0f };
 	conicalPendulum.length = 0.8f;
 	conicalPendulum.halApexAngle = 0.7f;
 	conicalPendulum.angle = 0.0f;
-	conicalPendulum.angularVelocity = 0.0f;
+	conicalPendulum.angularVelocity = 0.0f;*/
 
 	bool isStart = false;
 	ImVec2 button = {100,20};
@@ -851,19 +859,29 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			acceleration = -powf(womega, 2) * (position - center);
 			position = position + velocity + acceleration;*/
 
-			conicalPendulum.angularVelocity = std::sqrtf(9.8f / (conicalPendulum.length * std::cosf(conicalPendulum.halApexAngle)));
-			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;
+			/*conicalPendulum.angularVelocity = std::sqrtf(9.8f / (conicalPendulum.length * std::cosf(conicalPendulum.halApexAngle)));
+			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;*/
+			ball.velocity = ball.velocity + ball.acceleration * deltaTime;
+			ball.position = ball.position + ball.velocity * deltaTime;
 		}
+
+		if (IsCollision(Sphere{ ball.position,ball.radius }, plane)) {
+			Vector3 reflected = Reflect(ball.velocity, plane.normal);
+			Vector3 projectToNormal = MyMtVector3::Project(reflected, plane.normal);
+			Vector3 movingDirection = reflected - projectToNormal;
+			ball.velocity = projectToNormal * 0.6f + movingDirection;
+		}
+
 		/*sphere1.center = ball.position;
 		sphere1.radius = ball.radius;*/
 		
 		//sphere1.center = position + center;
-		float radius = std::sinf(conicalPendulum.halApexAngle) * conicalPendulum.length;
+		/*float radius = std::sinf(conicalPendulum.halApexAngle) * conicalPendulum.length;
 		float height = std::cosf(conicalPendulum.halApexAngle) * conicalPendulum.length;
 		position.x = conicalPendulum.anchor.x + std::cosf(conicalPendulum.angle) * radius;
 		position.y = conicalPendulum.anchor.y - height;
 		position.z = conicalPendulum.anchor.z - std::sinf(conicalPendulum.angle) * radius;
-		sphere1.center = position;
+		sphere1.center = position;*/
 
 		//for (size_t i = 0; i < 3; i++) {
 		//	sphere[i] = { {0.0f,0.0f,0.0f},0.1f };
@@ -899,9 +917,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/*ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
 		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);*/
 
-		/*ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
-		ImGui::DragFloat("Plane.Distance", &plane.distance, 0.01f);*/
-		/*plane.normal = MyMtVector3::Normalize(plane.normal);*/
+		ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
+		ImGui::DragFloat("Plane.Distance", &plane.distance, 0.01f);
+		plane.normal = MyMtVector3::Normalize(plane.normal);
 
 		/*ImGui::DragFloat3("Triangle.Vertices0", &triangle.Vertices[0].x, 0.01f);
 		ImGui::DragFloat3("Triangle.Vertices1", &triangle.Vertices[1].x, 0.01f);
@@ -952,11 +970,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);*/
 		/*ImGui::DragFloat3("spring.anchor", &spring.anchor.x, 0.01f);
 		ImGui::DragFloat("spring.naturalLength", &spring.naturalLength, 0.01f);
-		ImGui::DragFloat("spring.stiffness", &spring.stiffness, 0.01f);
+		ImGui::DragFloat("spring.stiffness", &spring.stiffness, 0.01f);*/
 		ImGui::DragFloat3("ball.position", &ball.position.x, 0.01f);
+		ImGui::DragFloat3("ball.velocity", &ball.velocity.x, 0.01f);
+		ImGui::DragFloat3("ball.acceleration", &ball.acceleration.x, 0.01f);
 		ImGui::DragFloat("ball.mass", &ball.mass, 0.01f);
-		ImGui::DragFloat("ball.radius", &ball.radius, 0.01f);*/
-		ImGui::DragFloat3("position", &position.x, 0.01f);
+		
+		//ImGui::DragFloat3("position", &position.x, 0.01f);
 		/*ImGui::DragFloat3("velocity", &velocity.x, 0.01f);
 		ImGui::DragFloat3("acceleration", &acceleration.x, 0.01f);*/
 		
@@ -982,12 +1002,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/*Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(spring.anchor, ViewProjectionMatrix), viewportMatrix);
 		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);*/
 		//Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
-		Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(conicalPendulum.anchor, ViewProjectionMatrix), viewportMatrix);
-		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);
-		Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
-		DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
+		/*Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(conicalPendulum.anchor, ViewProjectionMatrix), viewportMatrix);
+		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);*/
+		//Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
+		DrawSphere(Sphere(ball.position,ball.radius), ViewProjectionMatrix, viewportMatrix, ball.color);
 		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
-		//DrawPlane(plane, worldViewProjectionMatrix, viewportMatrix,0xffffffff);
+		DrawPlane(plane, ViewProjectionMatrix, viewportMatrix,0xffffffff);
 		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
 		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1Color);
 		/*DrawOBB(obb, ViewProjectionMatrix, viewportMatrix, obbColor);
