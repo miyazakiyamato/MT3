@@ -42,9 +42,11 @@ struct Ball
 {
 	Vector3 position;//位置
 	Vector3 velocity;//速度
-	Vector3 cceleration;//加速度
+	Vector3 acceleration;//加速度
 	float mass;//質量
 	float radius;//半径
+	float airResistanceCoefficient = 0.47f;//空気抵抗係数
+	//float projectedArea;//投影面積
 	unsigned int color;//色
 };
 struct Pendulum
@@ -765,6 +767,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	pendulum.angularVelocity = 0.0f;
 	pendulum.angularAcceleration = 0.0f;
 
+	Ball ball{};
+	ball.position;
+	ball.velocity;
+	ball.acceleration;
+	ball.mass;
+	ball.radius;
+	ball.airResistanceCoefficient = 0.47f;
+	ball.color = 0xffffffff;
+
 	bool isStart = false;
 	ImVec2 button = {100,20};
 	// ウィンドウの×ボタンが押されるまでループ
@@ -837,7 +848,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 			position = position + velocity + acceleration;*/
 
 			pendulum.angularAcceleration = -(9.8f / pendulum.length) * std::sinf(pendulum.angle);
-			pendulum.angularVelocity += pendulum.angularAcceleration * deltaTime;
+			pendulum.angularVelocity += (pendulum.angularAcceleration) * deltaTime;
+			pendulum.angularVelocity = pendulum.angularVelocity - (pendulum.angularVelocity * ball.airResistanceCoefficient) * deltaTime;
 			pendulum.angle += pendulum.angularVelocity * deltaTime;
 		}
 		/*sphere1.center = ball.position;
@@ -940,7 +952,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		ImGui::DragFloat3("ball.position", &ball.position.x, 0.01f);
 		ImGui::DragFloat("ball.mass", &ball.mass, 0.01f);
 		ImGui::DragFloat("ball.radius", &ball.radius, 0.01f);*/
+		ImGui::DragFloat3("anchor", &pendulum.anchor.x, 0.01f);
+		ImGui::DragFloat("length", &pendulum.length, 0.01f);
+		ImGui::DragFloat("angle", &pendulum.angle, 0.01f);
+		ImGui::DragFloat("angularVelocity", &pendulum.angularVelocity, 0.01f);
+		ImGui::DragFloat("angularAcceleration", &pendulum.angularAcceleration, 0.01f);
 		ImGui::DragFloat3("position", &position.x, 0.01f);
+		ImGui::DragFloat("airResistanceCoefficient", &ball.airResistanceCoefficient, 0.01f);
+
 		/*ImGui::DragFloat3("velocity", &velocity.x, 0.01f);
 		ImGui::DragFloat3("acceleration", &acceleration.x, 0.01f);*/
 		
