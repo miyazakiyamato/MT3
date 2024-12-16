@@ -9,7 +9,6 @@
 
 const char kWindowTitle[] = "LD2B_07_ミヤザキ_ヤマト";
 
-
 Vector3 operator+(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Add(v1, v2); }
 Vector3 operator-(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Subtract(v1, v2); }
 Vector3 operator*(float v1, const Vector3& v2) { return MyMtVector3::Multiply(v1, v2); }
@@ -435,6 +434,27 @@ bool IsCollision(const OBB& obb1, const OBB& obb2) {
 
 	return true;
 }
+//Quotanon
+Matrix4x4 MakeRotateAxisAngle(const Vector3& axis, float angle)
+{
+	// 回転軸を正規化
+	Vector3 axisNormal = MyMtVector3::Normalize(axis);
+
+	//何度も使う計算
+	float cosTheta = cos(angle);
+	float sinTheta = -sin(angle);
+	Vector3 axisCos = axisNormal * (1.0f - cosTheta);
+
+	Matrix4x4 rotateMatrix = {
+		cosTheta + axisNormal.x * axisCos.x, axisNormal.x * axisCos.y + -axisNormal.z * sinTheta, axisNormal.x * axisCos.z + axisNormal.y * sinTheta, 0.0f,
+		axisNormal.x * axisCos.y + axisNormal.z * sinTheta,cosTheta + axisNormal.y * axisCos.y, axisNormal.y * axisCos.z + -axisNormal.x * sinTheta, 0.0f,
+		axisNormal.x * axisCos.z + -axisNormal.y * sinTheta, axisNormal.y * axisCos.z + axisNormal.x * sinTheta,cosTheta + axisNormal.z * axisCos.z, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+
+	return rotateMatrix;
+}
+//Draw
 static const int kRowHeight = 20;
 static const int KColumnWidth = 60;
 void VectorScreenPrintf(int x, int y, const Vector3& vector, const char* label) {
@@ -447,7 +467,7 @@ void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label
 	Novice::ScreenPrintf(x, y, "%s", label);
 	for (int row = 0; row < 4; ++row) {
 		for (int column = 0; column < 4; ++column) {
-			Novice::ScreenPrintf(x + column * KColumnWidth, y + row * kRowHeight + kRowHeight, "%6.02f", matrix.m[row][column]);
+			Novice::ScreenPrintf(x + column * KColumnWidth, y + row * kRowHeight + kRowHeight, "%6.03f", matrix.m[row][column]);
 		}
 	}
 }
@@ -660,156 +680,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
-	//
-	int kWindowWidth = 1280;
-	int kWindowHeight = 720;
 
-	Vector3 cameraTranslate{ 0.0f,1.9f,-6.49f };
-	Vector3 cameraRotate{ 0.26f,0.0f,0.0f };
-
-	Matrix4x4 worldMatrix{};
-	Matrix4x4 cameraMatrix{};
-
-	Matrix4x4 viewMatrix{};
-	Matrix4x4 projectionMatrix{};
-	Matrix4x4 ViewProjectionMatrix{};
-	Matrix4x4 viewportMatrix{};
-
-	Matrix4x4 screenMatrix{
-		1,0,0,0,
-		0,-1,0,0,
-		0,0,1,0,
-		0,0,0,1
-	};
-
-	int mouseX = 0;
-	int mouseY = 0;
-	Vector3 mouse{};
-	Vector3 preMouse{};
-	Vector3 wheelVelocity{};
-
-	float kCameraSpeed = 0.03f;
-	Vector3 cameraVelocity{};
-
-	/*Sphere sphere1{
-		{0.0f,0.0f,0.0f},
-		0.05f
-	};*/
-	//uint32_t sphereColor1 = 0xffffffff;
-	/*Segment segment{
-		.origin{-0.8f,-0.3f,0.0f},
-		.diff{0.5f,0.5f,0.5f},
-	};
-	Segment screneSegment{};
-	uint32_t segmentColor = 0xffffffff;*/
-	/*Plane plane{
-		{0.0f,1.0f,0.0f},
-		1.0f
-	};*/
-	/*Triangle triangle;
-	triangle.Vertices[0] = { -1.0f, 0, 0 };
-	triangle.Vertices[1] = { 0, 1.0f, 0 };
-	triangle.Vertices[2] = { 1.0f, 0, 0 };
-	unsigned int triangleColor = 0xffffffff;*/
-	/*AABB aabb1{
-		.min{-0.5f,-0.5f,-0.5f},
-		.max{0.5f,0.5f,0.5f},
-	};
-	unsigned int aabb1Color = 0xffffffff;*/
-	/*Vector3 obbRotate{ 0.0f,0.0f,0.0f };
-	Matrix4x4 obbRotateMatrix{};
-	OBB obb{
-		.center{0.0f,0.0f,0.0f},
-		.orientations = {{1.0f,0.0f,0.0f},
-						 {0.0f,1.0f,0.0f},
-						 {0.0f,0.0f,1.0f}},
-		.size{0.5f,0.5f,0.5f}
-	};
-	uint32_t obbColor = 0xffffffff;
-	Vector3 obbRotate2{ -0.5f,-2.49f,0.15f };
-	OBB obb2{
-		.center{0.9f,0.66f,0.78f},
-		.orientations = {{1.0f,0.0f,0.0f},
-						 {0.0f,1.0f,0.0f},
-						 {0.0f,0.0f,1.0f}},
-		.size{0.5f,0.37f,0.5f}
-	};*/
-	/*Vector3 controlPoints[4] = {
-		{-0.8f,0.58f,1.0f},
-		{1.76f,1.0f,-0.3f},
-		{0.94f,-0.7f,2.3f},
-		{-0.53f,-0.26f,-0.15f,}
-	};*/
-	/*Sphere sphere[3]{};
-	Vector3 translates[3] = {
-		{0.2f,1.0f,0.0f},
-		{0.4f,0.0f,0.0f},
-		{0.3f,0.0f,0.0f},
-	};
-	Vector3 rotates[3] = {
-		{0.0f,0.0f,-6.8f},
-		{0.0f,0.0f,-1.4f},
-		{0.0f,0.0f,0.0f},
-	};
-	Vector3 scales[3] = {
-		{1.0f,1.0f,1.0f},
-		{1.0f,1.0f,1.0f},
-		{1.0f,1.0f,1.0f},
-	};
-	Matrix4x4 sphereWorldMatrix[3];
-	Matrix4x4 sphereWorldViewProjectionMatrix[3]{};*/
-
-	/*Spring spring{};
-	spring.anchor = { 0.0f,1.0f,0.0f };
-	spring.naturalLength = 0.7f;
-	spring.stiffness = 100.f;
-	spring.dampingCoefficient = 2.0f;*/
-
-	Ball ball{};
-	ball.position = { 0.8f,1.2f,0.3f };
-	ball.acceleration = { 0.0f,-9.8f,0.0f };
-	ball.mass = 2.0f;
-	ball.radius = 0.05f;
-	ball.color = WHITE;
+	Vector3 axis = MyMtVector3::Normalize({ 1.0f,1.0f,1.0f });
+	float angle = 0.44f;
+	Matrix4x4 rotateMatrix = MakeRotateAxisAngle(axis, angle);
 	
-	Plane plane{};
-	plane.normal = MyMtVector3::Normalize({ -0.2f,0.9f,-0.3f });
-	plane.distance = 0.0f;
-
-	Capsule capsule{};
-	capsule.radius = ball.radius;
-
-	float deltaTime = 1.0f / 60.0f;
-
-	/*const Vector3 kGravity{ 0.0f,-9.8f,0.0f };
-	Vector3 diff;
-	float length;*/
-	
-	//float angularVelocity = 3.14f;
-	//float angle = 0.0f;
-	//float radius = 0.8f;
-	//Vector3 position{ 0.0f,1.0f,0.0f };
-	//Vector3 center{};
-	//
-	//Vector3 acceleration{};
-	//Vector3 velocity{};
-	
-	/*Pendulum pendulum;
-	pendulum.anchor = { 0.0f,1.0f,0.0f };
-	pendulum.length = 0.8f;
-	pendulum.angle = 0.7f;
-	pendulum.angularVelocity = 0.0f;
-	pendulum.angularAcceleration = 0.0f;*/
-
-	/*ConicalPendulum conicalPendulum;
-	conicalPendulum.anchor = { 0.0f,1.0f,0.0f };
-	conicalPendulum.length = 0.8f;
-	conicalPendulum.halApexAngle = 0.7f;
-	conicalPendulum.angle = 0.0f;
-	conicalPendulum.angularVelocity = 0.0f;*/
-
-	bool isStart = false;
-	ImVec2 button = {100,20};
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -823,194 +698,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		/// ↓更新処理ここから
 		///
 		//
-		Novice::GetMousePosition(&mouseX, &mouseY);
-		mouse = { float(mouseX),float(-mouseY),0 };
-		wheelVelocity = MyMtMatrix::Transform({ 0,0,float(Novice::GetWheel()) / 400.0f }, MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, { 0,0,0 }));
-		cameraTranslate = MyMtVector3::Add(cameraTranslate, wheelVelocity);
-
-		cameraVelocity = { 0,0,0 };
-		if (keys[DIK_A]) {
-			cameraVelocity.x -= kCameraSpeed;
-		}
-		if (keys[DIK_D]) {
-			cameraVelocity.x += kCameraSpeed;
-		}
-		if (keys[DIK_W]) {
-			cameraVelocity.y += kCameraSpeed;
-		}
-		if (keys[DIK_S]) {
-			cameraVelocity.y -= kCameraSpeed;
-		}
-		cameraVelocity = MyMtMatrix::Transform(cameraVelocity, MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, { 0,0,0 }));
-		cameraTranslate = MyMtVector3::Add(cameraTranslate, cameraVelocity);
-
-		if (Novice::IsPressMouse(0) && keys[DIK_LSHIFT]) {
-			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0 }));
-			cameraTranslate = MyMtVector3::Add(cameraTranslate, MyMtMatrix::Transform(MyMtVector3::Divide(120.0f, MyMtVector3::Subtract(preMouse, mouse)), MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, { 0,0,0 })));
-			//cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0}));
-		}
-		if (keys[DIK_SPACE]) {
-			cameraRotate = MyMtVector3::Add(cameraRotate, MyMtVector3::Divide(1000.0f, { MyMtVector3::Subtract(preMouse, mouse).y,-MyMtVector3::Subtract(preMouse, mouse).x,0 }));
-		}
-		cameraMatrix = MyMtMatrix::MakeAffineMatrix({ 1.0f,1.0f,1.0f }, cameraRotate, cameraTranslate);
-		viewMatrix = MyMtMatrix::Inverse(cameraMatrix);
-		projectionMatrix = MyMtMatrix::MakePerspectiveFovMatrix(0.45f, float(kWindowWidth) / float(kWindowHeight), 0.1f, 100.0f);
-		ViewProjectionMatrix = MyMtMatrix::Multiply(viewMatrix, projectionMatrix);
-		viewportMatrix = MyMtMatrix::MakeViewportMatrix(0, 0, float(kWindowWidth), float(kWindowHeight), 0.0f, 1.0f);
 		
-		if (isStart) {
-			/*diff = ball.position - spring.anchor;
-			length = MyMtVector3::Length(diff);
-			if (length != 0.0f) {
-				Vector3 direction = MyMtVector3::Normalize(diff);
-				Vector3 restPosition = spring.anchor + direction * spring.naturalLength;
-				Vector3 displacement = length * (ball.position - restPosition);
-				Vector3 restoringForce = -spring.stiffness * displacement;
-				Vector3 force = restoringForce;
-				Vector3 dampingForce = -spring.dampingCoefficient * ball.velocity;
-				force = restoringForce + dampingForce;
-				ball.cceleration = force / ball.mass;
-			}
-			ball.velocity = ball.velocity + ball.cceleration * deltaTime + kGravity * deltaTime;
-			ball.position = ball.position + ball.velocity * deltaTime;*/
-			/*float womega = angularVelocity * deltaTime;
-			angle += womega;
-			velocity = Vector3(-radius * womega * std::sinf(angle), radius * womega * std::cosf(angle), 0);
-			acceleration = -powf(womega, 2) * (position - center);
-			position = position + velocity + acceleration;*/
-
-			/*conicalPendulum.angularVelocity = std::sqrtf(9.8f / (conicalPendulum.length * std::cosf(conicalPendulum.halApexAngle)));
-			conicalPendulum.angle += conicalPendulum.angularVelocity * deltaTime;*/
-			ball.velocity = ball.velocity + ball.acceleration * deltaTime;
-			capsule.origin = ball.position;
-			capsule.diff = ball.velocity * deltaTime;
-			ball.position = ball.position + ball.velocity * deltaTime;
-		}
-
-		/*if (IsCollision(Sphere{ ball.position,ball.radius }, plane)) {
-			Vector3 reflected = Reflect(ball.velocity, plane.normal);
-			Vector3 projectToNormal = MyMtVector3::Project(reflected, plane.normal);
-			Vector3 movingDirection = reflected - projectToNormal;
-			ball.velocity = projectToNormal * 0.6f + movingDirection;
-		}*/
-		if (IsCollision(capsule, plane)) {
-			ball.position = capsule.origin;
-			Vector3 reflected = Reflect(ball.velocity, plane.normal);
-			Vector3 projectToNormal = MyMtVector3::Project(reflected, plane.normal);
-			Vector3 movingDirection = reflected - projectToNormal;
-			ball.velocity = projectToNormal * 0.6f + movingDirection;
-		}
-
-		/*sphere1.center = ball.position;
-		sphere1.radius = ball.radius;*/
-		
-		//sphere1.center = position + center;
-		/*float radius = std::sinf(conicalPendulum.halApexAngle) * conicalPendulum.length;
-		float height = std::cosf(conicalPendulum.halApexAngle) * conicalPendulum.length;
-		position.x = conicalPendulum.anchor.x + std::cosf(conicalPendulum.angle) * radius;
-		position.y = conicalPendulum.anchor.y - height;
-		position.z = conicalPendulum.anchor.z - std::sinf(conicalPendulum.angle) * radius;
-		sphere1.center = position;*/
-
-		//for (size_t i = 0; i < 3; i++) {
-		//	sphere[i] = { {0.0f,0.0f,0.0f},0.1f };
-		//	if (i == 0) {
-		//		sphereWorldMatrix[i] = MyMtMatrix::MakeAffineMatrix(scales[i], rotates[i], translates[i]);
-		//	}
-		//	else {
-		//		sphereWorldMatrix[i] = MyMtMatrix::Multiply(MyMtMatrix::MakeAffineMatrix(scales[i], rotates[i], translates[i]), sphereWorldMatrix[i - 1]);
-		//	}
-		//	sphereWorldViewProjectionMatrix[i] = MyMtMatrix::Multiply(sphereWorldMatrix[i], ViewProjectionMatrix);
-		//}
-
-		//obb = MakeOBBRotate(obb, obbRotate);
-		//obb2 = MakeOBBRotate(obb2, obbRotate2);
-		/*sphereColor1 = IsCollision(sphere1, plane) == true ? 0xff0000ff : 0xffffffff;
-		segmentColor = IsCollision(segment, plane) == true ? 0xff0000ff : 0xffffffff;*/
-		/*segmentColor = IsCollision(triangle, segment) == true ? 0xff0000ff : 0xffffffff;*/
-		//aabb1Color = IsCollision(aabb1,sphere1) == true ? 0xff0000ff : 0xffffffff;
-		//aabb1Color = IsCollision(aabb1, segment) == true ? 0xff0000ff : 0xffffffff;
-		//obbColor = IsCollision(obb,sphere1) == true ? 0xff0000ff : 0xffffffff;
-		/*obbColor = IsCollision(obb,obb2) == true ? 0xff0000ff : 0xffffffff;*/
-
-		/*screneSegment.origin = MyMtMatrix::Transform(MyMtMatrix::Transform(segment.origin,ViewProjectionMatrix), viewportMatrix);
-		screneSegment.diff = MyMtMatrix::Transform(MyMtMatrix::Transform(MyMtVector3::Add(segment.origin,segment.diff),ViewProjectionMatrix), viewportMatrix);*/
-
-		ImGui::Begin("Window");
-		if (ImGui::Button("Start", button)) {
-			isStart = true;
-		}
-		ImGui::DragFloat3("CameraTranslate", &cameraTranslate.x, 0.01f);
-		ImGui::DragFloat3("CameraRotate", &cameraRotate.x, 0.01f);
-
-		/*ImGui::DragFloat3("SphereCenter1", &sphere1.center.x, 0.01f);
-		ImGui::DragFloat("SphereRadius1", &sphere1.radius, 0.01f);*/
-
-		ImGui::DragFloat3("Plane.Normal", &plane.normal.x, 0.01f);
-		ImGui::DragFloat("Plane.Distance", &plane.distance, 0.01f);
-		plane.normal = MyMtVector3::Normalize(plane.normal);
-
-		/*ImGui::DragFloat3("Triangle.Vertices0", &triangle.Vertices[0].x, 0.01f);
-		ImGui::DragFloat3("Triangle.Vertices1", &triangle.Vertices[1].x, 0.01f);
-		ImGui::DragFloat3("Triangle.Vertices2", &triangle.Vertices[2].x, 0.01f);*/
-
-		/*ImGui::DragFloat3("Segment.Origin", &segment.origin.x, 0.01f);
-		ImGui::DragFloat3("Segment.Diff", &segment.diff.x, 0.01f);*/
-
-		/*ImGui::DragFloat3("AABB1.MIN", &aabb1.min.x, 0.01f);
-		ImGui::DragFloat3("AABB1.MAX", &aabb1.max.x, 0.01f);*/
-		/*aabb1.min.x = (std::min)(aabb1.min.x, aabb1.max.x);
-		aabb1.max.x = (std::max)(aabb1.min.x, aabb1.max.x);
-		aabb1.min.y = (std::min)(aabb1.min.y, aabb1.max.y);
-		aabb1.max.y = (std::max)(aabb1.min.y, aabb1.max.y);
-		aabb1.min.z = (std::min)(aabb1.min.z, aabb1.max.z);
-		aabb1.max.z = (std::max)(aabb1.min.z, aabb1.max.z);*/
-
-		/*ImGui::DragFloat("OBB.Rotate.x", &obbRotate.x, 0.01f);
-		ImGui::DragFloat("OBB.Rotate.y", &obbRotate.y, 0.01f);
-		ImGui::DragFloat("OBB.Rotate.z", &obbRotate.z, 0.01f);
-
-		ImGui::DragFloat3("OBB.Center", &obb.center.x, 0.01f);
-		ImGui::DragFloat3("OBB.Orientations[0]", &obb.orientations[0].x, 0.01f);
-		ImGui::DragFloat3("OBB.Orientations[1]", &obb.orientations[1].x, 0.01f);
-		ImGui::DragFloat3("OBB.Orientations[2]", &obb.orientations[2].x, 0.01f);
-		ImGui::DragFloat3("OBB.Size", &obb.size.x, 0.01f);
-
-		ImGui::DragFloat("OBB2.Rotate.x", &obbRotate2.x, 0.01f);
-		ImGui::DragFloat("OBB2.Rotate.y", &obbRotate2.y, 0.01f);
-		ImGui::DragFloat("OBB2.Rotate.z", &obbRotate2.z, 0.01f);
-
-		ImGui::DragFloat3("OBB2.Center", &obb2.center.x, 0.01f);
-		ImGui::DragFloat3("OBB2.Orientations[0]", &obb2.orientations[0].x, 0.01f);
-		ImGui::DragFloat3("OBB2.Orientations[1]", &obb2.orientations[1].x, 0.01f);
-		ImGui::DragFloat3("OBB2.Orientations[2]", &obb2.orientations[2].x, 0.01f);
-		ImGui::DragFloat3("OBB2.Size", &obb2.size.x, 0.01f);*/
-		/*ImGui::DragFloat3("controlPoints[0]", &controlPoints[0].x, 0.01f);
-		ImGui::DragFloat3("controlPoints[1]", &controlPoints[1].x, 0.01f);
-		ImGui::DragFloat3("controlPoints[2]", &controlPoints[2].x, 0.01f);*/
-		/*ImGui::DragFloat3("translates[0]", &translates[0].x, 0.01f);
-		ImGui::DragFloat3("translates[1]", &translates[1].x, 0.01f);
-		ImGui::DragFloat3("translates[2]", &translates[2].x, 0.01f);
-		ImGui::DragFloat3("rotates[0]", &rotates[0].x, 0.01f);
-		ImGui::DragFloat3("rotates[1]", &rotates[1].x, 0.01f);
-		ImGui::DragFloat3("rotates[2]", &rotates[2].x, 0.01f);
-		ImGui::DragFloat3("scales[0]", &scales[0].x, 0.01f);
-		ImGui::DragFloat3("scales[1]", &scales[1].x, 0.01f);
-		ImGui::DragFloat3("scales[2]", &scales[2].x, 0.01f);*/
-		/*ImGui::DragFloat3("spring.anchor", &spring.anchor.x, 0.01f);
-		ImGui::DragFloat("spring.naturalLength", &spring.naturalLength, 0.01f);
-		ImGui::DragFloat("spring.stiffness", &spring.stiffness, 0.01f);*/
-		ImGui::DragFloat3("ball.position", &ball.position.x, 0.01f);
-		ImGui::DragFloat3("ball.velocity", &ball.velocity.x, 0.01f);
-		ImGui::DragFloat3("ball.acceleration", &ball.acceleration.x, 0.01f);
-		ImGui::DragFloat("ball.mass", &ball.mass, 0.01f);
-		
-		//ImGui::DragFloat3("position", &position.x, 0.01f);
-		/*ImGui::DragFloat3("velocity", &velocity.x, 0.01f);
-		ImGui::DragFloat3("acceleration", &acceleration.x, 0.01f);*/
-		
-		ImGui::End();
-		/*preMouse = mouse;*/
 		///
 		/// ↑更新処理ここまで
 		///
@@ -1018,30 +706,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		DrawGrid(ViewProjectionMatrix, viewportMatrix);
-		/*for (size_t i = 0; i < 3; i++) {
-			if (i != 0) {
-				Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere[i - 1].center, sphereWorldViewProjectionMatrix[i - 1]), viewportMatrix);
-				Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere[i].center, sphereWorldViewProjectionMatrix[i]), viewportMatrix);
-				Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
-			}
-			DrawSphere(sphere[i], sphereWorldViewProjectionMatrix[i], viewportMatrix, 0x000000ff);
-		}*/
-		//DrawSphere(sphere1, ViewProjectionMatrix, viewportMatrix, 0xffffffff);
-		/*Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(spring.anchor, ViewProjectionMatrix), viewportMatrix);
-		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);*/
-		//Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
-		/*Vector3 screneSegment = MyMtMatrix::Transform(MyMtMatrix::Transform(conicalPendulum.anchor, ViewProjectionMatrix), viewportMatrix);
-		Vector3 screneSegment2 = MyMtMatrix::Transform(MyMtMatrix::Transform(sphere1.center, ViewProjectionMatrix), viewportMatrix);*/
-		//Novice::DrawLine((int)screneSegment.x, (int)screneSegment.y, (int)screneSegment2.x, (int)screneSegment2.y, 0xffffffff);
-		DrawSphere(Sphere(ball.position,ball.radius), ViewProjectionMatrix, viewportMatrix, ball.color);
-		//Novice::DrawLine((int)screneSegment.origin.x, (int)screneSegment.origin.y, (int)screneSegment.diff.x, (int)screneSegment.diff.y, segmentColor);
-		DrawPlane(plane, ViewProjectionMatrix, viewportMatrix,0xffffffff);
-		//DrawTriangle(triangle, worldViewProjectionMatrix, viewportMatrix, triangleColor);
-		//DrawAABB(aabb1, worldViewProjectionMatrix, viewportMatrix, aabb1Color);
-		/*DrawOBB(obb, ViewProjectionMatrix, viewportMatrix, obbColor);
-		DrawOBB(obb2, ViewProjectionMatrix, viewportMatrix, 0xffffffff);*/
-		//DrawCotmullRom(controlPoints[0], controlPoints[1], controlPoints[2],controlPoints[3], ViewProjectionMatrix, viewportMatrix, 0x0000ffff);
+		MatrixScreenPrintf(0, 0, rotateMatrix, "rotateMatrix");
+		
 		///
 		/// ↑描画処理ここまで
 		///
