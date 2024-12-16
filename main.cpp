@@ -4,21 +4,11 @@
 #include <cmath>
 #include "MyMtVector3.h"
 #include "MyMtMatrix.h"
+#include "Quaternion.h"
 #include "imgui.h"
 #include <algorithm>
 
 const char kWindowTitle[] = "LD2B_07_ミヤザキ_ヤマト";
-
-Vector3 operator+(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Add(v1, v2); }
-Vector3 operator-(const Vector3& v1, const Vector3& v2) { return MyMtVector3::Subtract(v1, v2); }
-Vector3 operator*(float v1, const Vector3& v2) { return MyMtVector3::Multiply(v1, v2); }
-Vector3 operator*(const Vector3& v1, float v2) { return v2 * v1; }
-Vector3 operator/(float v1, const Vector3& v2) { return MyMtVector3::Divide(v1, v2); }
-Vector3 operator/(const Vector3& v1, float v2) { return v2 / v1; }
-Vector3 operator-(const Vector3& v) { return { -v.x,-v.y,-v.z }; }
-Matrix4x4 operator+(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Add(m1, m2); }
-Matrix4x4 operator-(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Subtract(m1, m2); }
-Matrix4x4 operator*(const Matrix4x4& m1, const Matrix4x4& m2) { return MyMtMatrix::Multiply(m1, m2); }
 
 struct Sphere
 {
@@ -79,11 +69,6 @@ struct Capsule
 	float radius;
 };
 
-//クロス積
-Vector3 Cross(const Vector3& v1, const Vector3& v2) {
-	Vector3 ab{ v1.y * v2.z - v1.z * v2.y,v1.z * v2.x - v1.x * v2.z,v1.x * v2.y - v1.y * v2.x };
-	return ab;
-}
 Vector3 Perpendicular(const Vector3& vector) {
 	if (vector.x != 0.0f || vector.y != 0.0f) {
 		return { -vector.y,vector.x,0.0f };
@@ -173,7 +158,7 @@ bool IsCollision(const Triangle& triangle, const Segment& segment) {
 	Vector3 v12 = MyMtVector3::Subtract(triangle.Vertices[2], triangle.Vertices[1]);
 	Plane plane;
 	// 法線nを算出
-	plane.normal = MyMtVector3::Normalize(Cross(v01, v12));
+	plane.normal = MyMtVector3::Normalize(MyMtVector3::Cross(v01, v12));
 	// 距離を求める
 	plane.distance = MyMtVector3::Dot(triangle.Vertices[0], plane.normal);
 
@@ -182,9 +167,9 @@ bool IsCollision(const Triangle& triangle, const Segment& segment) {
 		float t = (plane.distance - MyMtVector3::Dot(segment.origin, plane.normal)) / dot;
 		Vector3 segmentP = MyMtVector3::Add(segment.origin, MyMtVector3::Multiply(t, segment.diff));
 
-		Vector3 cross01 = Cross(MyMtVector3::Subtract(triangle.Vertices[1], triangle.Vertices[0]), MyMtVector3::Subtract(segmentP, triangle.Vertices[1]));
-		Vector3 cross12 = Cross(MyMtVector3::Subtract(triangle.Vertices[2], triangle.Vertices[1]), MyMtVector3::Subtract(segmentP, triangle.Vertices[2]));
-		Vector3 cross20 = Cross(MyMtVector3::Subtract(triangle.Vertices[0], triangle.Vertices[2]), MyMtVector3::Subtract(segmentP, triangle.Vertices[0]));
+		Vector3 cross01 = MyMtVector3::Cross(MyMtVector3::Subtract(triangle.Vertices[1], triangle.Vertices[0]), MyMtVector3::Subtract(segmentP, triangle.Vertices[1]));
+		Vector3 cross12 = MyMtVector3::Cross(MyMtVector3::Subtract(triangle.Vertices[2], triangle.Vertices[1]), MyMtVector3::Subtract(segmentP, triangle.Vertices[2]));
+		Vector3 cross20 = MyMtVector3::Cross(MyMtVector3::Subtract(triangle.Vertices[0], triangle.Vertices[2]), MyMtVector3::Subtract(segmentP, triangle.Vertices[0]));
 
 		if (MyMtVector3::Dot(cross01, plane.normal) >= 0.0f &&
 			MyMtVector3::Dot(cross12, plane.normal) >= 0.0f &&
@@ -370,116 +355,69 @@ bool IsCollision(const OBB& obb1, const OBB& obb2) {
 
 	// 分離軸 : A1B3
 	Vector3 Cross1;
-	Cross1 = Cross(NAe[0], NBe[0]);
+	Cross1 = MyMtVector3::Cross(NAe[0], NBe[0]);
 	rA = LenSegOnSeparateAxis(Cross1, Ae[1], Ae[2]);
 	rB = LenSegOnSeparateAxis(Cross1, Be[1], Be[2]);
 	L = fabs(MyMtVector3::Dot(Interval, Cross1));
 	if (L > rA + rB)return false;
 
 	// 分離軸 : A1B2
-	Cross1 = Cross(NAe[0], NBe[1]);
+	Cross1 = MyMtVector3::Cross(NAe[0], NBe[1]);
 	rA = LenSegOnSeparateAxis(Cross1, Ae[1], Ae[2]);
 	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[2]);
 	L = fabs(MyMtVector3::Dot(Interval, Cross1));
 	if (L > rA + rB)return false;
 
 	// 分離軸 : A1B3
-	Cross1 = Cross(NAe[0], NBe[2]);
+	Cross1 = MyMtVector3::Cross(NAe[0], NBe[2]);
 	rA = LenSegOnSeparateAxis(Cross1, Ae[1], Ae[2]);
 	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[1]);
 	L = fabs(MyMtVector3::Dot(Interval, Cross1));
 	if (L > rA + rB)return false;
 
 	// 分離軸 : A2B1
-	Cross1 = Cross(NAe[1], NBe[0]);
+	Cross1 = MyMtVector3::Cross(NAe[1], NBe[0]);
 	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[2]);
 	rB = LenSegOnSeparateAxis(Cross1, Be[1], Be[2]);
 	L = fabs(MyMtVector3::Dot(Interval, Cross1));
 	if (L > rA + rB)return false;
 
 	// 分離軸 : A2B2
-	Cross1 = Cross(NAe[1], NBe[1]);
+	Cross1 = MyMtVector3::Cross(NAe[1], NBe[1]);
 	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[2]);
 	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[2]);
 	L = fabs(MyMtVector3::Dot(Interval, Cross1));
 	if (L > rA + rB)return false;
 
 	// 分離軸 : A2B3
-	Cross1 = Cross(NAe[1], NBe[2]);
+	Cross1 = MyMtVector3::Cross(NAe[1], NBe[2]);
 	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[2]);
 	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[1]);
 	L = fabs(MyMtVector3::Dot(Interval, Cross1));
 	if (L > rA + rB)return false;
 
 	// 分離軸 : A3B1
-	Cross1 = Cross(NAe[2], NBe[0]);
+	Cross1 = MyMtVector3::Cross(NAe[2], NBe[0]);
 	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[1]);
 	rB = LenSegOnSeparateAxis(Cross1, Be[1], Be[2]);
 	L = fabs(MyMtVector3::Dot(Interval, Cross1));
 	if (L > rA + rB)return false;
 
 	// 分離軸 : A3B2
-	Cross1 = Cross(NAe[2], NBe[1]);
+	Cross1 = MyMtVector3::Cross(NAe[2], NBe[1]);
 	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[1]);
 	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[2]);
 	L = fabs(MyMtVector3::Dot(Interval, Cross1));
 	if (L > rA + rB)return false;
 
 	// 分離軸 : A3B3
-	Cross1 = Cross(NAe[2], NBe[2]);
+	Cross1 = MyMtVector3::Cross(NAe[2], NBe[2]);
 	rA = LenSegOnSeparateAxis(Cross1, Ae[0], Ae[1]);
 	rB = LenSegOnSeparateAxis(Cross1, Be[0], Be[1]);
 	L = fabs(MyMtVector3::Dot(Interval, Cross1));
 	if (L > rA + rB)return false;
 
 	return true;
-}
-//Quotanon
-Matrix4x4 MakeRotateAxisAngle(const Vector3& axis, float angle)
-{
-	// 回転軸を正規化
-	Vector3 axisNormal = MyMtVector3::Normalize(axis);
-
-	//何度も使う計算
-	float cosTheta = cos(angle);
-	float sinTheta = -sin(angle);
-	Vector3 axisCos = axisNormal * (1.0f - cosTheta);
-
-	Matrix4x4 rotateMatrix = {
-		cosTheta + axisNormal.x * axisCos.x, axisNormal.x * axisCos.y + -axisNormal.z * sinTheta, axisNormal.x * axisCos.z + axisNormal.y * sinTheta, 0.0f,
-		axisNormal.x * axisCos.y + axisNormal.z * sinTheta,cosTheta + axisNormal.y * axisCos.y, axisNormal.y * axisCos.z + -axisNormal.x * sinTheta, 0.0f,
-		axisNormal.x * axisCos.z + -axisNormal.y * sinTheta, axisNormal.y * axisCos.z + axisNormal.x * sinTheta,cosTheta + axisNormal.z * axisCos.z, 0.0f,
-		0.0f, 0.0f, 0.0f, 1.0f
-	};
-
-	return rotateMatrix;
-}
-Matrix4x4 DirectionTodirection(const Vector3& from, const Vector3& to)
-{
-	// fromとtoの正規化
-	Vector3 fromNormal = MyMtVector3::Normalize(from);
-	Vector3 toNormal = MyMtVector3::Normalize(to);
-
-	// 回転軸（クロス積）
-	Vector3 axis = Cross(fromNormal, toNormal);
-
-	// 回転角度（内積からコサインを計算してアークコサインで角度に変換）
-	float angle = acos(MyMtVector3::Dot(fromNormal, toNormal));
-	if (axis.x == 0.0f && axis.y == 0.0f && axis.z == 0.0f ) {
-		if (toNormal.x != 0 || toNormal.y != 0) {
-			axis = { toNormal.y,-toNormal.x,0 };
-		}
-		else if (toNormal.x != 0 || toNormal.z != 0) {
-			axis = { toNormal.z,0,-toNormal.x };
-		}
-	}
-	// 回転軸を正規化
-	axis = MyMtVector3::Normalize(axis);
-	
-	// 回転行列を計算
-	Matrix4x4 rotationMatrix = MakeRotateAxisAngle(axis,angle);
-
-	return rotationMatrix;
 }
 //Draw
 static const int kRowHeight = 20;
@@ -497,6 +435,14 @@ void MatrixScreenPrintf(int x, int y, const Matrix4x4& matrix, const char* label
 			Novice::ScreenPrintf(x + column * KColumnWidth, y + row * kRowHeight + kRowHeight, "%6.03f", matrix.m[row][column]);
 		}
 	}
+}
+void QuaternionScreenPrintf(int x, int y, const Quaternion& quaternion, const char* label) {
+	// x, y 座標に quaternion の各成分を表示
+	Novice::ScreenPrintf(x, y, "%.02f", quaternion.x);
+	Novice::ScreenPrintf(x + KColumnWidth, y, "%.02f", quaternion.y);
+	Novice::ScreenPrintf(x + KColumnWidth * 2, y, "%.02f", quaternion.z);
+	Novice::ScreenPrintf(x + KColumnWidth * 3, y, "%.02f", quaternion.w);
+	Novice::ScreenPrintf(x + KColumnWidth * 4, y, ": %s", label);
 }
 void DrawSphere(const Sphere& sphere, const Matrix4x4& viewProjectionMatrix, const Matrix4x4& viewportMatrix, uint32_t color) {
 	const uint32_t kSubdivision = 20;
@@ -560,7 +506,7 @@ void DrawPlane(const Plane& plane, const Matrix4x4& viewProjectionMatrix, const 
 	Vector3 perpendiculars[4];
 	perpendiculars[0] = MyMtVector3::Normalize(Perpendicular(plane.normal));
 	perpendiculars[1] = { -perpendiculars[0].x,-perpendiculars[0].y,-perpendiculars[0].z };
-	perpendiculars[2] = Cross(plane.normal, perpendiculars[0]);
+	perpendiculars[2] = MyMtVector3::Cross(plane.normal, perpendiculars[0]);
 	perpendiculars[3] = { -perpendiculars[2].x,-perpendiculars[2].y,-perpendiculars[2].z };
 	//
 	Vector3 points[4];
@@ -708,14 +654,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 	
-	Vector3 from0 = MyMtVector3::Normalize(Vector3{ 1.0f, 0.7f, 0.5f });
-	Vector3 to0 = -from0;
-	Vector3 from1 = MyMtVector3::Normalize(Vector3{ -0.6f, 0.9f, 0.2f });
-	Vector3 to1 = MyMtVector3::Normalize(Vector3{ 0.4f, 0.7f, -0.5f });
+	Quaternion q1 = { 2.0f,3.0f,4.0f,1.0f };
+	Quaternion q2 = { 1.0f,3.0f,5.0f,2.0f };
+	Quaternion identity = Quaternion::Identity();
+	Quaternion conj = Quaternion::Conjugate(q1);
+	Quaternion inv = Quaternion::Inverse(q1);
+	Quaternion normal = Quaternion::Normalize(q1);
+	Quaternion mul1 = Quaternion::Multiply(q1,q2);
+	Quaternion mul2 = Quaternion::Multiply(q2,q1);
+	float norm = Quaternion::Norm(q1);
 
-	Matrix4x4 rotateMatrix0 = DirectionTodirection(MyMtVector3::Normalize(Vector3{ 1.0f,0.0f,0.0f }), MyMtVector3::Normalize(Vector3{ -1.0f,0.0f,0.0f }));
-	Matrix4x4 rotateMatrix1 = DirectionTodirection(from0, to0);
-	Matrix4x4 rotateMatrix2 = DirectionTodirection(from1, to1);
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -737,10 +685,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		MatrixScreenPrintf(0, 0, rotateMatrix0, "rotateMatrix0");
-		MatrixScreenPrintf(0, kRowHeight * 5, rotateMatrix1, "rotateMatrix1");
-		MatrixScreenPrintf(0, kRowHeight * 10, rotateMatrix2, "rotateMatrix2");
-		
+		QuaternionScreenPrintf(0, kRowHeight * 0, identity,"identity");
+		QuaternionScreenPrintf(0, kRowHeight * 1, conj,"conj");
+		QuaternionScreenPrintf(0, kRowHeight * 2, inv,"inv");
+		QuaternionScreenPrintf(0, kRowHeight * 3, normal,"normal");
+		QuaternionScreenPrintf(0, kRowHeight * 4, mul1,"mul1");
+		QuaternionScreenPrintf(0, kRowHeight * 5, mul2,"mul2");
+		Novice::ScreenPrintf(0, kRowHeight * 6, "%0.2f : norm", norm);
 		///
 		/// ↑描画処理ここまで
 		///

@@ -1,0 +1,18 @@
+#pragma once
+#include "MyMtMatrix.h"
+
+class Quaternion{
+public:
+	float x, y, z, w;
+	static Matrix4x4 MakeRotateAxisAngle(const Vector3& axis, float angle);
+	static Matrix4x4 DirectionToDirection(const Vector3& from, const Vector3& to);
+	static Quaternion Identity();
+	static Quaternion Conjugate(const Quaternion& quaternion);
+	static Quaternion Inverse(const Quaternion& quaternion);
+	static Quaternion Normalize(const Quaternion& quaternion);
+	static Quaternion Multiply(const Quaternion& lhs, const Quaternion& rhs);
+	static float Norm(const Quaternion& quaternion);
+
+	Quaternion operator/(const float& f);
+};
+
