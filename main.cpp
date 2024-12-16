@@ -454,6 +454,33 @@ Matrix4x4 MakeRotateAxisAngle(const Vector3& axis, float angle)
 
 	return rotateMatrix;
 }
+Matrix4x4 DirectionTodirection(const Vector3& from, const Vector3& to)
+{
+	// fromとtoの正規化
+	Vector3 fromNormal = MyMtVector3::Normalize(from);
+	Vector3 toNormal = MyMtVector3::Normalize(to);
+
+	// 回転軸（クロス積）
+	Vector3 axis = Cross(fromNormal, toNormal);
+
+	// 回転角度（内積からコサインを計算してアークコサインで角度に変換）
+	float angle = acos(MyMtVector3::Dot(fromNormal, toNormal));
+	if (axis.x == 0.0f && axis.y == 0.0f && axis.z == 0.0f ) {
+		if (toNormal.x != 0 || toNormal.y != 0) {
+			axis = { toNormal.y,-toNormal.x,0 };
+		}
+		else if (toNormal.x != 0 || toNormal.z != 0) {
+			axis = { toNormal.z,0,-toNormal.x };
+		}
+	}
+	// 回転軸を正規化
+	axis = MyMtVector3::Normalize(axis);
+	
+	// 回転行列を計算
+	Matrix4x4 rotationMatrix = MakeRotateAxisAngle(axis,angle);
+
+	return rotationMatrix;
+}
 //Draw
 static const int kRowHeight = 20;
 static const int KColumnWidth = 60;
@@ -680,11 +707,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
-
-	Vector3 axis = MyMtVector3::Normalize({ 1.0f,1.0f,1.0f });
-	float angle = 0.44f;
-	Matrix4x4 rotateMatrix = MakeRotateAxisAngle(axis, angle);
 	
+	Vector3 from0 = MyMtVector3::Normalize(Vector3{ 1.0f, 0.7f, 0.5f });
+	Vector3 to0 = -from0;
+	Vector3 from1 = MyMtVector3::Normalize(Vector3{ -0.6f, 0.9f, 0.2f });
+	Vector3 to1 = MyMtVector3::Normalize(Vector3{ 0.4f, 0.7f, -0.5f });
+
+	Matrix4x4 rotateMatrix0 = DirectionTodirection(MyMtVector3::Normalize(Vector3{ 1.0f,0.0f,0.0f }), MyMtVector3::Normalize(Vector3{ -1.0f,0.0f,0.0f }));
+	Matrix4x4 rotateMatrix1 = DirectionTodirection(from0, to0);
+	Matrix4x4 rotateMatrix2 = DirectionTodirection(from1, to1);
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -706,7 +737,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		MatrixScreenPrintf(0, 0, rotateMatrix, "rotateMatrix");
+		MatrixScreenPrintf(0, 0, rotateMatrix0, "rotateMatrix0");
+		MatrixScreenPrintf(0, kRowHeight * 5, rotateMatrix1, "rotateMatrix1");
+		MatrixScreenPrintf(0, kRowHeight * 10, rotateMatrix2, "rotateMatrix2");
 		
 		///
 		/// ↑描画処理ここまで
