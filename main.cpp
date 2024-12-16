@@ -654,15 +654,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
 	
-	Quaternion q1 = { 2.0f,3.0f,4.0f,1.0f };
-	Quaternion q2 = { 1.0f,3.0f,5.0f,2.0f };
-	Quaternion identity = Quaternion::Identity();
-	Quaternion conj = Quaternion::Conjugate(q1);
-	Quaternion inv = Quaternion::Inverse(q1);
-	Quaternion normal = Quaternion::Normalize(q1);
-	Quaternion mul1 = Quaternion::Multiply(q1,q2);
-	Quaternion mul2 = Quaternion::Multiply(q2,q1);
-	float norm = Quaternion::Norm(q1);
+	Quaternion rotation = Quaternion::MakeRotateAxisAngleQuaternion(MyMtVector3::Normalize(Vector3{ 1.0f,0.4f,-0.2f }), 0.45f);
+	Vector3 pointY = { 2.1f, -0.9f, 1.3f };
+	Matrix4x4 rotateMatrix = Quaternion::MakeRotateMatrix(rotation);
+	Vector3 rotateByQuaternion = Quaternion::RotateVector(pointY, rotation);
+	Vector3 rotateByMatrix = MyMtMatrix::Transform(pointY, rotateMatrix);
 
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
@@ -685,13 +681,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		QuaternionScreenPrintf(0, kRowHeight * 0, identity,"identity");
-		QuaternionScreenPrintf(0, kRowHeight * 1, conj,"conj");
-		QuaternionScreenPrintf(0, kRowHeight * 2, inv,"inv");
-		QuaternionScreenPrintf(0, kRowHeight * 3, normal,"normal");
-		QuaternionScreenPrintf(0, kRowHeight * 4, mul1,"mul1");
-		QuaternionScreenPrintf(0, kRowHeight * 5, mul2,"mul2");
-		Novice::ScreenPrintf(0, kRowHeight * 6, "%0.2f : norm", norm);
+		QuaternionScreenPrintf(0, 0, rotation, "rotation");
+		MatrixScreenPrintf(0, kRowHeight, rotateMatrix, "rotateMatrix");
+		VectorScreenPrintf(0, kRowHeight * 6, rotateByQuaternion, " : rotateByQuaternion");
+		VectorScreenPrintf(0, kRowHeight * 7, rotateByMatrix, " : rotateByMatrix");
 		///
 		/// ↑描画処理ここまで
 		///

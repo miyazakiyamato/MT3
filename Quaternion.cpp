@@ -95,6 +95,61 @@ float Quaternion::Norm(const Quaternion& quaternion)
 	return sqrtf(quaternion.x * quaternion.x + quaternion.y * quaternion.y + quaternion.z * quaternion.z + quaternion.w * quaternion.w);
 }
 
+Quaternion Quaternion::MakeRotateAxisAngleQuaternion(const Vector3& axis, float angle)
+{
+	Quaternion result;
+	float halfAngle = angle / 2.0f;
+	float sinHalfAngle = sinf(halfAngle);
+	// 回転軸を正規化
+	Vector3 axisNormal = MyMtVector3::Normalize(axis);
+	//クォータニオンを計算
+	result.x = axisNormal.x * sinHalfAngle;
+	result.y = axisNormal.y * sinHalfAngle;
+	result.z = axisNormal.z * sinHalfAngle;
+	result.w = cosf(halfAngle);
+	return result;
+}
+
+Vector3 Quaternion::RotateVector(const Vector3& vector, const Quaternion& quaternion)
+{
+	Quaternion vQuaternion = { vector.x, vector.y, vector.z, 0.0f };
+	//共役を取得
+	Quaternion vConjugate = Quaternion::Conjugate(quaternion);
+	//回転
+	Quaternion vResult = Quaternion::Multiply(Quaternion::Multiply(quaternion, vQuaternion), vConjugate);
+	return Vector3(vResult.x, vResult.y, vResult.z);
+}
+
+Matrix4x4 Quaternion::MakeRotateMatrix(const Quaternion& quaternion)
+{
+	float xx = quaternion.x * quaternion.x;
+	float yy = quaternion.y * quaternion.y;
+	float zz = quaternion.z * quaternion.z;
+	float ww = quaternion.w * quaternion.w;
+	float xy = quaternion.x * quaternion.y;
+	float xz = quaternion.x * quaternion.z;
+	float yz = quaternion.y * quaternion.z;
+	float wx = quaternion.w * quaternion.x;
+	float wy = quaternion.w * quaternion.y;
+	float wz = quaternion.w * quaternion.z;
+
+	Matrix4x4 result = {
+		ww + xx - yy - zz,2.0f * (xy + wz),2.0f * (xz - wy),0.0f,
+		2.0f * (xy - wz),ww - xx + yy - zz,2.0f * (yz + wx),0.0f,
+		2.0f * (xz + wy),2.0f * (yz - wx),ww - xx - yy + zz,0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+	return result;
+}
+Quaternion Quaternion::operator*(const float& f)
+{
+	Quaternion result;
+	result.x = (*this).x * f;
+	result.y = (*this).y * f;
+	result.z = (*this).z * f;
+	result.w = (*this).w * f;
+	return result;
+}
 Quaternion Quaternion::operator/(const float& f)
 {
 	Quaternion result;

@@ -12,7 +12,11 @@ public:
 	static Quaternion Normalize(const Quaternion& quaternion);
 	static Quaternion Multiply(const Quaternion& lhs, const Quaternion& rhs);
 	static float Norm(const Quaternion& quaternion);
-
+	static Quaternion MakeRotateAxisAngleQuaternion(const Vector3& axis, float angle);
+	static Vector3 RotateVector(const Vector3& vector, const Quaternion& quaternion);
+	static Matrix4x4 MakeRotateMatrix(const Quaternion& quaternion);
+	
+	Quaternion operator*(const float& f);
 	Quaternion operator/(const float& f);
 };
 
