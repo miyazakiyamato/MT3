@@ -1,6 +1,9 @@
 ﻿#pragma once
 #include "MyMtVector3.h"
-#include "Matrix4x4.h"
+struct Matrix4x4
+{
+	float m[4][4];
+};
 
 class MyMtMatrix
 {

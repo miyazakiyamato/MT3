@@ -69,6 +69,25 @@ struct Capsule
 	float radius;
 };
 
+float Probability(uint32_t sizeS, uint32_t sizeA) {
+	return (float)sizeA / (float)sizeS;
+}
+
+uint32_t Fractional(uint32_t n) {
+	if (n > 0) {
+		return n * Fractional(n - 1);
+	}
+	return 1;
+}
+
+uint32_t Permutation(uint32_t n, uint32_t k) {
+	return Fractional(n) / Fractional(n - k);
+}
+
+float Combination(uint32_t n, uint32_t k) {
+	return float(Permutation(n,k) / Fractional(k));
+}
+
 Vector3 Perpendicular(const Vector3& vector) {
 	if (vector.x != 0.0f || vector.y != 0.0f) {
 		return { -vector.y,vector.x,0.0f };
@@ -681,10 +700,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		QuaternionScreenPrintf(0, 0, rotation, "rotation");
+		Novice::ScreenPrintf(0, 0, "%f", Permutation(5, 3));
+		/*QuaternionScreenPrintf(0, 0, rotation, "rotation");
 		MatrixScreenPrintf(0, kRowHeight, rotateMatrix, "rotateMatrix");
 		VectorScreenPrintf(0, kRowHeight * 6, rotateByQuaternion, " : rotateByQuaternion");
-		VectorScreenPrintf(0, kRowHeight * 7, rotateByMatrix, " : rotateByMatrix");
+		VectorScreenPrintf(0, kRowHeight * 7, rotateByMatrix, " : rotateByMatrix");*/
 		///
 		/// ↑描画処理ここまで
 		///

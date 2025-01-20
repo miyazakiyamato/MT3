@@ -1,5 +1,11 @@
 ﻿#pragma once
-#include "Vector3.h"
+struct Vector3
+{
+	float x;
+	float y;
+	float z;
+};
+
 struct Line {
 	Vector3 origin;
 	Vector3 diff;
