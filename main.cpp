@@ -672,13 +672,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// キー入力結果を受け取る箱
 	char keys[256] = { 0 };
 	char preKeys[256] = { 0 };
-	
-	Quaternion rotation = Quaternion::MakeRotateAxisAngleQuaternion(MyMtVector3::Normalize(Vector3{ 1.0f,0.4f,-0.2f }), 0.45f);
-	Vector3 pointY = { 2.1f, -0.9f, 1.3f };
-	Matrix4x4 rotateMatrix = Quaternion::MakeRotateMatrix(rotation);
-	Vector3 rotateByQuaternion = Quaternion::RotateVector(pointY, rotation);
-	Vector3 rotateByMatrix = MyMtMatrix::Transform(pointY, rotateMatrix);
 
+	Quaternion rotation0 = Quaternion::MakeRotateAxisAngleQuaternion({ 0.71f, 0.71f, 0.0f }, 0.3f);
+	Quaternion rotation1 = Quaternion::MakeRotateAxisAngleQuaternion({ 0.71f, 0.0f, 0.71f }, 3.141592f);
+	Quaternion interpolate0 = Quaternion::Slerp(rotation0, rotation1, 0.0f);
+	Quaternion interpolate1 = Quaternion::Slerp(rotation0, rotation1, 0.3f);
+	Quaternion interpolate2 = Quaternion::Slerp(rotation0, rotation1, 0.5f);
+	Quaternion interpolate3 = Quaternion::Slerp(rotation0, rotation1, 0.7f);
+	Quaternion interpolate4 = Quaternion::Slerp(rotation0, rotation1, 1.0f);
 	// ウィンドウの×ボタンが押されるまでループ
 	while (Novice::ProcessMessage() == 0) {
 		// フレームの開始
@@ -700,11 +701,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 		///
 		/// ↓描画処理ここから
 		///
-		Novice::ScreenPrintf(0, 0, "%f", Permutation(5, 3));
-		/*QuaternionScreenPrintf(0, 0, rotation, "rotation");
-		MatrixScreenPrintf(0, kRowHeight, rotateMatrix, "rotateMatrix");
-		VectorScreenPrintf(0, kRowHeight * 6, rotateByQuaternion, " : rotateByQuaternion");
-		VectorScreenPrintf(0, kRowHeight * 7, rotateByMatrix, " : rotateByMatrix");*/
+		QuaternionScreenPrintf(0, 0, interpolate0, "interpolate0, Slerp(q0, q1, 0.0f)");
+		QuaternionScreenPrintf(0, kRowHeight, interpolate1, "interpolate1, Slerp(q0, q1, 0.3f)");
+		QuaternionScreenPrintf(0, kRowHeight * 2, interpolate2, "interpolate2, Slerp(q0, q1, 0.5f)");
+		QuaternionScreenPrintf(0, kRowHeight * 3, interpolate3, "interpolate3, Slerp(q0, q1, 0.7f)");
+		QuaternionScreenPrintf(0, kRowHeight * 4, interpolate4, "interpolate4, Slerp(q0, q1, 1.0f)");
 		///
 		/// ↑描画処理ここまで
 		///
