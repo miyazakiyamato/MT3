@@ -144,33 +144,38 @@ Matrix4x4 Quaternion::MakeRotateMatrix(const Quaternion& quaternion)
 Quaternion Quaternion::Slerp(const Quaternion& q0, const Quaternion& q1, float t)
 {
 	Quaternion result{};
-	// クォータニオンの内積を計算
-	float dot = q0.x * q1.x + q0.y * q1.y + q0.z * q1.z + q0.w * q1.w;
+	Quaternion q0Copy = q0;
+	Quaternion q1Copy = q1;
+	// q0とq1の内積
+	float dot = q0Copy.x * q1Copy.x + q0Copy.y * q1Copy.y + q0Copy.z * q1Copy.z + q0Copy.w * q1Copy.w;
 
 	// 内積が負の場合は反転させて最短経路を取るようにする
-	Quaternion q2 = q1;
 	if (dot < 0.0f) {
-		q2.x = -q1.x;
-		q2.y = -q1.y;
-		q2.z = -q1.z;
-		q2.w = -q1.w;
-		dot = -dot;
+		q1Copy = -q1Copy;//もう片方の回転を利用
+		dot = -dot; //内積も反転
 	}
 
-	// thetaを求める
+	// なす角を求める
 	float theta = acosf(dot);
 
 	// 補間係数を計算
 	float sinTheta = sinf(theta);
-	float a = sinf((1.0f - t) * theta) / sinTheta;
-	float b = sinf(t * theta) / sinTheta;
+	float scale0 = sinf((1.0f - t) * theta) / sinTheta;
+	float scale1 = sinf(t * theta) / sinTheta;
 
 	// 補間されたクォータニオンを計算
-	result.x = a * q0.x + b * q2.x;
-	result.y = a * q0.y + b * q2.y;
-	result.z = a * q0.z + b * q2.z;
-	result.w = a * q0.w + b * q2.w;
+	result = q0Copy * scale0 + q1Copy * scale1;
 
+	return result;
+}
+
+Quaternion Quaternion::operator+(const Quaternion& q)
+{
+	Quaternion result;
+	result.x = (*this).x + q.x;
+	result.y = (*this).y + q.y;
+	result.z = (*this).z + q.z;
+	result.w = (*this).w + q.w;
 	return result;
 }
 
@@ -190,5 +195,15 @@ Quaternion Quaternion::operator/(const float& f)
 	result.y = (*this).y / f;
 	result.z = (*this).z / f;
 	result.w = (*this).w / f;
+	return result;
+}
+
+Quaternion Quaternion::operator-()
+{
+	Quaternion result;
+	result.x = -(*this).x;
+	result.y = -(*this).y;
+	result.z = -(*this).z;
+	result.w = -(*this).w;
 	return result;
 }

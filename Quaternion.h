@@ -16,7 +16,9 @@ public:
 	static Vector3 RotateVector(const Vector3& vector, const Quaternion& quaternion);
 	static Matrix4x4 MakeRotateMatrix(const Quaternion& quaternion);
 	static Quaternion Slerp(const Quaternion& q0, const Quaternion& q1, float t);
+	Quaternion operator+(const Quaternion& q);
 	Quaternion operator*(const float& f);
 	Quaternion operator/(const float& f);
+	Quaternion operator-();
 };
 
