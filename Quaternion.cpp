@@ -141,9 +141,7 @@ Matrix4x4 Quaternion::MakeRotateMatrix(const Quaternion& quaternion)
 	};
 	return result;
 }
-Quaternion Quaternion::Slerp(const Quaternion& q0, const Quaternion& q1, float t)
-{
-	Quaternion result{};
+Quaternion Quaternion::Slerp(const Quaternion& q0, const Quaternion& q1, float t){
 	Quaternion q0Copy = q0;
 	Quaternion q1Copy = q1;
 	// q0とq1の内積
@@ -155,6 +153,13 @@ Quaternion Quaternion::Slerp(const Quaternion& q0, const Quaternion& q1, float t
 		dot = -dot; //内積も反転
 	}
 
+	// 内積が非常に大きい場合、線形補間を行う
+	const float EPSILON = 0.0005f;
+	if (dot >= 1.0f - EPSILON) {
+		// 線形補間
+		return q0Copy * (1.0f - t) + q1Copy * t;
+	}
+
 	// なす角を求める
 	float theta = acosf(dot);
 
@@ -164,9 +169,7 @@ Quaternion Quaternion::Slerp(const Quaternion& q0, const Quaternion& q1, float t
 	float scale1 = sinf(t * theta) / sinTheta;
 
 	// 補間されたクォータニオンを計算
-	result = q0Copy * scale0 + q1Copy * scale1;
-
-	return result;
+	return q0Copy * scale0 + q1Copy * scale1;
 }
 
 Quaternion Quaternion::operator+(const Quaternion& q)

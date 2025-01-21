@@ -674,7 +674,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	char preKeys[256] = { 0 };
 
 	Quaternion rotation0 = Quaternion::MakeRotateAxisAngleQuaternion({ 0.71f, 0.71f, 0.0f }, 0.3f);
-	Quaternion rotation1 = Quaternion::MakeRotateAxisAngleQuaternion({ 0.71f, 0.0f, 0.71f }, 3.141592f);
+	Quaternion rotation1 = { -rotation0.x, -rotation0.y, -rotation0.z, -rotation0.w };
 	Quaternion interpolate0 = Quaternion::Slerp(rotation0, rotation1, 0.0f);
 	Quaternion interpolate1 = Quaternion::Slerp(rotation0, rotation1, 0.3f);
 	Quaternion interpolate2 = Quaternion::Slerp(rotation0, rotation1, 0.5f);
